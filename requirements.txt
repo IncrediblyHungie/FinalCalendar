@@ -3,6 +3,7 @@ Flask==3.0.0
 Flask-SQLAlchemy==3.1.1
 Flask-Migrate==4.0.5
 Flask-Cors==4.0.0
+Flask-Dropzone==1.6.0  # Drag-and-drop file upload with thumbnail previews
 
 # Database
 psycopg2-binary==2.9.9

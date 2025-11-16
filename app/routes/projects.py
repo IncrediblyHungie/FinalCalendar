@@ -120,6 +120,99 @@ def upload():
 
     return render_template('upload.html', project=project, images=images)
 
+@bp.route('/upload-single', methods=['POST'])
+def upload_single():
+    """
+    Upload a single image via AJAX - returns JSON with success/failure
+    This is the NEW robust upload endpoint that handles files ONE AT A TIME
+    """
+    try:
+        project = get_current_project()
+        if not project:
+            return jsonify({'success': False, 'error': 'No active project'}), 400
+
+        # Check if file exists in request
+        if 'photo' not in request.files:
+            current_app.logger.error("❌ No 'photo' field in request.files")
+            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+
+        file = request.files['photo']
+        if not file or not file.filename:
+            current_app.logger.error("❌ Empty file or no filename")
+            return jsonify({'success': False, 'error': 'Empty file'}), 400
+
+        current_app.logger.info(f"📤 UPLOAD-SINGLE: Processing {file.filename}")
+
+        # Check total image count (enforce 5 max)
+        current_images = session_storage.get_uploaded_images()
+        if len(current_images) >= 5:
+            current_app.logger.warning(f"⚠️  Max 5 photos reached (currently {len(current_images)})")
+            return jsonify({'success': False, 'error': 'Maximum 5 photos allowed'}), 400
+
+        # Process image (same logic as batch upload)
+        original_data = file.read()
+        current_app.logger.info(f"   Read {len(original_data)} bytes from {file.filename}")
+
+        # Open image (supports JPEG, PNG, HEIC, etc.)
+        img = Image.open(io.BytesIO(original_data))
+
+        # Auto-rotate based on EXIF orientation (iPhone photos)
+        img = ImageOps.exif_transpose(img)
+
+        # Convert to RGB if necessary
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        # Resize if needed
+        max_dimension = 2560
+        if max(img.size) > max_dimension:
+            ratio = max_dimension / max(img.size)
+            new_size = tuple(int(dim * ratio) for dim in img.size)
+            img = img.resize(new_size, Image.Resampling.LANCZOS)
+            current_app.logger.info(f"   Resized from {img.size} to {new_size}")
+
+        # Save optimized image
+        optimized_io = io.BytesIO()
+        img.save(optimized_io, format='JPEG', quality=95, optimize=True)
+        img_data = optimized_io.getvalue()
+
+        # Create thumbnail
+        img.thumbnail((200, 200))
+        thumb_io = io.BytesIO()
+        img.save(thumb_io, format='JPEG', quality=85)
+        thumb_data = thumb_io.getvalue()
+
+        # Save to session storage with validation
+        image_id = session_storage.add_uploaded_image(
+            secure_filename(file.filename),
+            img_data,
+            thumb_data
+        )
+
+        current_app.logger.info(f"   💾 Saved image ID {image_id}: {secure_filename(file.filename)}")
+
+        # CRITICAL: Verify image was actually saved
+        saved_images = session_storage.get_uploaded_images()
+        image_saved = any(img['id'] == image_id for img in saved_images)
+
+        if not image_saved:
+            current_app.logger.error(f"❌ Image {image_id} failed to save to storage!")
+            return jsonify({'success': False, 'error': 'Image failed to save to storage'}), 500
+
+        current_app.logger.info(f"✅ Upload complete: {secure_filename(file.filename)} (ID: {image_id})")
+
+        # Return success with thumbnail URL
+        return jsonify({
+            'success': True,
+            'image_id': image_id,
+            'filename': secure_filename(file.filename),
+            'thumbnail_url': url_for('api.get_thumbnail', image_id=image_id, project_id=project['id'])
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"❌ Upload failed: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # REMOVED: Customization feature - using simple stock prompts instead
 # Users now go directly from upload → themes → generate
 # @bp.route('/customize', methods=['GET', 'POST'])

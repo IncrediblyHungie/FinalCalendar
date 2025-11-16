@@ -370,9 +370,8 @@
 
 {% block extra_scripts %}
 <script>
-// Mobile-Optimized Upload with Client-Side Compression
+// NEW ROBUST UPLOAD: Individual file uploads with real-time thumbnails
 const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB per image
-const MAX_TOTAL_SIZE = 40 * 1024 * 1024; // 40MB total
 const MAX_DIMENSION = 3072; // Max width/height
 const COMPRESSION_QUALITY = 0.92; // 92% quality
 
@@ -414,8 +413,8 @@ dropzone.addEventListener('drop', function(e) {
     }
 });
 
-// File size validation before upload
-fileInput.addEventListener('change', function(e) {
+// File selection handler - triggers individual uploads
+fileInput.addEventListener('change', async function(e) {
     const files = Array.from(e.target.files);
 
     if (files.length === 0) {
@@ -424,116 +423,113 @@ fileInput.addEventListener('change', function(e) {
 
     console.log(`✅ Selected ${files.length} photo${files.length > 1 ? 's' : ''}`);
 
-    // Validate individual file sizes
-    const oversizedFiles = files.filter(f => f.size > MAX_FILE_SIZE);
-    if (oversizedFiles.length > 0) {
-        alert(`⚠️ ${oversizedFiles.length} file(s) exceed 8MB limit. They will be automatically compressed.`);
-    }
-
-    // Validate total size
-    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-    if (totalSize > MAX_TOTAL_SIZE) {
-        const totalMB = (totalSize / (1024 * 1024)).toFixed(1);
-        alert(`⚠️ Total upload size (${totalMB}MB) exceeds 40MB limit. Please select fewer photos or smaller files.`);
-        e.target.value = '';
-        return;
-    }
-
-    const sizeMB = (totalSize / (1024 * 1024)).toFixed(1);
-    console.log(`Total size: ${sizeMB}MB`);
-
-    // Auto-submit form
-    document.getElementById('uploadForm').dispatchEvent(new Event('submit'));
-});
-
-// Prevent double submission
-let isUploading = false;
-
-// Client-side image compression and upload with progress
-document.getElementById('uploadForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    if (isUploading) {
-        console.log('Upload already in progress');
-        return;
-    }
-    isUploading = true;
-
-    const files = Array.from(fileInput.files);
-
-    if (files.length === 0) {
-        alert('Please select at least one photo');
-        isUploading = false;
-        return;
-    }
-
+    // Show progress UI
     const progressDiv = document.getElementById('uploadProgress');
     const progressBar = document.getElementById('uploadProgressBar');
     const statusText = document.getElementById('uploadStatus');
-
-    // Show progress UI
     progressDiv.style.display = 'block';
 
     try {
-        // Compress images client-side
-        statusText.textContent = 'Optimizing images for upload...';
-        progressBar.style.width = '10%';
+        // Upload files one at a time
+        let successCount = 0;
+        let failCount = 0;
 
-        const compressedFiles = await compressImages(files, (progress) => {
-            progressBar.style.width = `${10 + (progress * 40)}%`;
-            statusText.textContent = `Compressing image ${Math.floor(progress * files.length) + 1}/${files.length}...`;
-        });
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const fileNum = i + 1;
 
-        // Create FormData with compressed images
-        const formData = new FormData();
-        compressedFiles.forEach((file, index) => {
-            formData.append('photos', file, file.name);
-        });
+            statusText.textContent = `Processing image ${fileNum}/${files.length}...`;
+            progressBar.style.width = `${(i / files.length) * 100}%`;
 
-        // Upload with progress tracking
-        statusText.textContent = 'Uploading to server...';
-        progressBar.style.width = '50%';
+            try {
+                // Compress image first (client-side)
+                const compressedFile = await compressImage(file);
 
-        const xhr = new XMLHttpRequest();
+                statusText.textContent = `Uploading image ${fileNum}/${files.length}...`;
 
-        xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-                const uploadPercent = (e.loaded / e.total) * 100;
-                progressBar.style.width = `${50 + (uploadPercent * 0.5)}%`;
-                const uploadedMB = (e.loaded / (1024 * 1024)).toFixed(1);
-                const totalMB = (e.total / (1024 * 1024)).toFixed(1);
-                statusText.textContent = `Uploading... ${uploadedMB}MB / ${totalMB}MB`;
+                // Upload to server (individual endpoint)
+                const result = await uploadSingleFile(compressedFile);
+
+                if (result.success) {
+                    // Add thumbnail to gallery immediately
+                    addThumbnailToGallery(result.image_id, result.thumbnail_url, result.filename);
+                    successCount++;
+                    console.log(`✅ Uploaded ${result.filename}`);
+                } else {
+                    failCount++;
+                    console.error(`❌ Failed to upload ${file.name}: ${result.error}`);
+                    alert(`Failed to upload ${file.name}: ${result.error}`);
+                }
+            } catch (error) {
+                failCount++;
+                console.error(`❌ Error uploading ${file.name}:`, error);
+                alert(`Error uploading ${file.name}: ${error.message}`);
             }
-        });
+        }
 
-        xhr.addEventListener('load', () => {
-            if (xhr.status === 200 || xhr.status === 302) {
-                progressBar.style.width = '100%';
-                statusText.textContent = 'Upload complete! Redirecting...';
-                fileInput.value = '';
-                isUploading = false;  // ✅ FIX: Reset flag before redirect
-                setTimeout(() => window.location.href = '/project/upload', 500);
-            } else {
-                isUploading = false;
-                throw new Error(`Upload failed: ${xhr.statusText}`);
-            }
-        });
+        // Upload complete
+        progressBar.style.width = '100%';
+        statusText.textContent = `Complete! ${successCount} uploaded, ${failCount} failed.`;
 
-        xhr.addEventListener('error', () => {
-            isUploading = false;
-            throw new Error('Network error during upload');
-        });
+        // Clear file input
+        fileInput.value = '';
 
-        xhr.open('POST', this.action);
-        xhr.send(formData);
+        // Hide progress after 2 seconds if all successful
+        if (failCount === 0) {
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+                location.reload(); // Refresh to show "Start transformation" button
+            }, 2000);
+        }
 
     } catch (error) {
         console.error('Upload error:', error);
         alert(`Upload failed: ${error.message}`);
         progressDiv.style.display = 'none';
-        isUploading = false;
     }
 });
+
+// Upload single file to server
+async function uploadSingleFile(file) {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    const response = await fetch('/project/upload-single', {
+        method: 'POST',
+        body: formData
+    });
+
+    return await response.json();
+}
+
+// Add thumbnail to gallery in real-time
+function addThumbnailToGallery(imageId, thumbnailUrl, filename) {
+    const gallery = document.getElementById('imagesGallery');
+
+    // Remove empty state if present
+    const emptyState = gallery.querySelector('.images-gallery-empty');
+    if (emptyState) {
+        emptyState.remove();
+    }
+
+    // Create thumbnail element
+    const wrapper = document.createElement('div');
+    wrapper.className = 'image-thumbnail-wrapper';
+    wrapper.innerHTML = `
+        <img src="${thumbnailUrl}"
+             alt="${filename}"
+             class="image-thumbnail"
+             loading="lazy">
+        <button type="button"
+                class="delete-image-btn"
+                data-image-id="${imageId}"
+                title="Delete this photo">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+
+    gallery.appendChild(wrapper);
+}
 
 // Image compression function
 async function compressImages(files, onProgress) {
