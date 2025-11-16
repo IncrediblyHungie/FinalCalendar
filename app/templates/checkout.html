@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}Order Your Calendar{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Progress Steps -->
+    <div class="progress-steps mb-5">
+        <div class="step completed">
+            <div class="step-number"><i class="fas fa-check"></i></div>
+            <div class="step-label">Upload Photos</div>
+        </div>
+        <div class="step completed">
+            <div class="step-number"><i class="fas fa-check"></i></div>
+            <div class="step-label">Review Themes</div>
+        </div>
+        <div class="step completed">
+            <div class="step-number"><i class="fas fa-check"></i></div>
+            <div class="step-label">Generate</div>
+        </div>
+        <div class="step completed">
+            <div class="step-number"><i class="fas fa-check"></i></div>
+            <div class="step-label">Preview</div>
+        </div>
+        <div class="step active">
+            <div class="step-number">5</div>
+            <div class="step-label">Checkout</div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h1 class="text-center mb-4">
+                <i class="fas fa-gift text-primary me-2"></i>
+                Order Your Custom Calendar
+            </h1>
+            <p class="lead text-center mb-5">
+                Your 12 hunk months are ready! Choose your calendar style and we'll print and ship it to you.
+            </p>
+
+            <div class="row g-4 align-items-center">
+                <!-- Desktop Calendar -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm hover-lift">
+                        <img src="https://images.printify.com/68d29f8ffd6cd3545304b932"
+                             class="card-img-top"
+                             alt="Desktop Calendar"
+                             style="height: 250px; object-fit: cover;">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">Desktop Calendar</h5>
+                            <p class="card-text flex-grow-1">
+                                <small class="text-muted">10" × 5"</small><br>
+                                250gsm premium paper<br>
+                                Spiral bound at top
+                            </p>
+                            <div class="mb-3">
+                                <h4 class="text-primary mb-0"><del class="text-muted">$30</del> $22.50 <small class="text-success">(25% off)</small></h4>
+                                <small class="text-muted">Free shipping to US</small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <button class="btn btn-primary w-100 order-btn"
+                                    data-product="desktop">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                Order Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar 2026 (MOST POPULAR) -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-lg hover-lift most-popular-card">
+                        <div class="popular-badge">
+                            <i class="fas fa-star me-1"></i>
+                            MOST POPULAR
+                        </div>
+                        <img src="https://images.printify.com/68d29f8ffd6cd3545304b932"
+                             class="card-img-top"
+                             alt="Calendar 2026"
+                             style="height: 250px; object-fit: cover;">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">Calendar 2026</h5>
+                            <p class="card-text flex-grow-1">
+                                <small class="text-muted">10.8" × 8.4"</small><br>
+                                Premium 270gsm semi-glossy paper<br>
+                                Wire binding, centered holes for hanging
+                            </p>
+                            <div class="mb-3">
+                                <h4 class="text-success mb-0">$24.99</h4>
+                                <small class="text-muted">Free shipping to US</small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <button class="btn btn-success w-100 order-btn"
+                                    data-product="desktop">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                Order Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wall Calendar -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm hover-lift">
+                        <img src="https://images.printify.com/68d29f8ffd6cd3545304b932"
+                             class="card-img-top"
+                             alt="Wall Calendar"
+                             style="height: 250px; object-fit: cover;">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">Wall Calendar 2026</h5>
+                            <p class="card-text flex-grow-1">
+                                <small class="text-muted">Multiple sizes</small><br>
+                                250gsm high-quality paper<br>
+                                Spiral binding, matte grid area
+                            </p>
+                            <div class="mb-3">
+                                <h4 class="text-primary mb-0"><del class="text-muted">$35.33</del> $26.50 <small class="text-success">(25% off)</small></h4>
+                                <small class="text-muted">Free shipping to US</small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <button class="btn btn-primary w-100 order-btn"
+                                    data-product="wall_calendar">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                Order Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="card mt-5 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-star text-warning me-2"></i>
+                        What's Included
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-3">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    <strong>All 12 AI-generated images</strong> printed in high quality
+                                </li>
+                                <li class="mb-3">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    <strong>Professional printing</strong> on premium paper stock
+                                </li>
+                                <li class="mb-3">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    <strong>Full 2026 calendar</strong> with date grids
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-3">
+                                    <i class="fas fa-shipping-fast text-primary me-2"></i>
+                                    <strong>Fast shipping</strong> - arrives in 5-7 business days
+                                </li>
+                                <li class="mb-3">
+                                    <i class="fas fa-lock text-info me-2"></i>
+                                    <strong>Secure payment</strong> via Stripe
+                                </li>
+                                <li class="mb-3">
+                                    <i class="fas fa-smile text-warning me-2"></i>
+                                    <strong>100% satisfaction guarantee</strong>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="text-center mt-4">
+                <a href="{{ url_for('projects.preview') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Back to Preview
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Progress Steps */
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.step {
+    text-align: center;
+    flex: 1;
+    position: relative;
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.step.completed .step-number {
+    background: #198754;
+    color: white;
+}
+
+.step.active .step-number {
+    background: #0d6efd;
+    color: white;
+}
+
+.step-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.step.completed .step-label,
+.step.active .step-label {
+    color: #333;
+    font-weight: 600;
+}
+
+/* Product Cards */
+.hover-lift {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    position: relative;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+}
+
+/* Most Popular Card Styling */
+.most-popular-card {
+    border: 3px solid #198754 !important;
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(25, 135, 84, 0.3) !important;
+}
+
+.most-popular-card:hover {
+    transform: scale(1.08) translateY(-5px);
+    box-shadow: 0 12px 32px rgba(25, 135, 84, 0.4) !important;
+}
+
+/* Most Popular Badge */
+.popular-badge {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #333;
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+    border: 2px solid #fff;
+}
+
+.popular-badge i {
+    color: #ff6b6b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .most-popular-card {
+        transform: scale(1);
+    }
+
+    .most-popular-card:hover {
+        transform: scale(1.02) translateY(-5px);
+    }
+}
+</style>
+
+<script>
+document.querySelectorAll('.order-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const productType = this.dataset.product;
+
+        // Show loading
+        const originalHTML = this.innerHTML;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+        this.disabled = true;
+
+        try {
+            // Create Stripe checkout session
+            const response = await fetch('/api/checkout/create', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({product_type: productType})
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Redirect to Stripe checkout
+                console.log('✓ Checkout session created:', data.session_id);
+                window.location.href = data.checkout_url;
+            } else {
+                alert('Error: ' + (data.error || 'Failed to create checkout session'));
+                this.innerHTML = originalHTML;
+                this.disabled = false;
+            }
+        } catch (error) {
+            console.error('Checkout error:', error);
+            alert('Failed to start checkout. Please try again.');
+            this.innerHTML = originalHTML;
+            this.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}

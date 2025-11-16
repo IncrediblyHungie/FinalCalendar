@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Generating Calendar{% endblock %}
+
+{% block extra_head %}
+<style>
+@keyframes magic-glow {
+    0%, 100% {
+        filter: drop-shadow(0 0 20px var(--accent-primary)) drop-shadow(0 0 40px rgba(255, 90, 121, 0.5));
+        transform: rotate(0deg) scale(1);
+    }
+    25% {
+        filter: drop-shadow(0 0 30px var(--accent-purple)) drop-shadow(0 0 60px rgba(139, 92, 246, 0.5));
+        transform: rotate(90deg) scale(1.1);
+    }
+    50% {
+        filter: drop-shadow(0 0 20px var(--accent-primary)) drop-shadow(0 0 40px rgba(255, 90, 121, 0.5));
+        transform: rotate(180deg) scale(1);
+    }
+    75% {
+        filter: drop-shadow(0 0 30px var(--accent-purple)) drop-shadow(0 0 60px rgba(139, 92, 246, 0.5));
+        transform: rotate(270deg) scale(1.1);
+    }
+}
+
+.magic-icon {
+    animation: magic-glow 4s ease-in-out infinite;
+    color: var(--accent-primary);
+}
+
+.month-status-badge {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: var(--text-primary);
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.month-status-badge.bg-success {
+    background: var(--accent-success);
+    border-color: var(--accent-success);
+}
+
+.month-status-badge.bg-warning {
+    background: var(--accent-warning);
+    border-color: var(--accent-warning);
+    animation: pulse 2s infinite;
+}
+
+.month-status-badge.bg-info {
+    background: var(--accent-purple);
+    border-color: var(--accent-purple);
+}
+
+.month-status-badge.bg-danger {
+    background: var(--accent-danger);
+    border-color: var(--accent-danger);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-figma section-figma" style="background-color: #1A1A1A; min-height: 100vh;">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <div class="card-figma-dark" style="padding: var(--spacing-xl); background-color: #2A2A2A; border: 1px solid #3A3A3A; border-radius: 16px;">
+                <!-- Magic Animation -->
+                <div class="mb-lg">
+                    <i class="fas fa-magic magic-icon" style="font-size: 64px;"></i>
+                </div>
+
+                <!-- Header -->
+                <h2 style="font-size: 32px; margin-bottom: var(--spacing-md); color: #FFFFFF;">
+                    AI is Transforming You into 12 Hunks...
+                </h2>
+
+                <p style="font-size: 18px; color: #B0B0B0; margin-bottom: var(--spacing-xl); max-width: 600px; margin-left: auto; margin-right: auto;">
+                    We're putting your face on ridiculously sexy bodies! Generating all 12 months simultaneously.
+                    This takes 2-3 minutes. Feel free to close this page and return later!
+                </p>
+
+                <!-- Progress Bar -->
+                <div class="progress-figma mb-md" style="background: #2A2A2A; border-radius: 24px; height: 12px;">
+                    <div class="progress-figma-bar" id="progressBar" style="width: 0%; background: linear-gradient(135deg, #FF5A79 0%, #FF8A9D 100%); height: 100%; border-radius: 24px; transition: width 0.3s ease;"></div>
+                </div>
+                <div id="progressText" class="progress-text text-center mb-xl" style="color: #FF5A79; font-weight: 600;">0/12 months</div>
+
+                <!-- Generation Status -->
+                <div class="generation-status mb-xl">
+                    <h5 class="mb-md" style="color: #FFFFFF;">Generation Progress:</h5>
+                    <div class="month-badges">
+                        {% for month in months %}
+                        <div class="month-status-badge
+                            {% if month.generation_status == 'completed' %}bg-success
+                            {% elif month.generation_status == 'processing' %}bg-warning
+                            {% elif month.generation_status == 'failed' %}bg-danger
+                            {% else %}bg-secondary{% endif %}"
+                            data-month="{{ month.month_number }}">
+                            {{ month.month_number }}
+                            {% if month.generation_status == 'completed' %}
+                                <i class="fas fa-check mt-1"></i>
+                            {% elif month.generation_status == 'processing' %}
+                                <i class="fas fa-spinner fa-spin mt-1"></i>
+                            {% elif month.generation_status == 'failed' %}
+                                <i class="fas fa-times mt-1"></i>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Check Status Button -->
+                <button class="btn-figma-secondary" onclick="location.reload()">
+                    <i class="fas fa-sync-alt me-2"></i>
+                    Check Status
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// PARALLEL AI generation with memory management (2 at a time to prevent OOM)
+const months = {{ months | tojson }};
+let completedCount = months.filter(m => m.generation_status === 'completed').length;
+let failedCount = 0;
+let activeRequests = 0;
+const MAX_PARALLEL = 1; // Generate 1 month at a time (for testing)
+const MAX_RETRIES = 3; // Retry failed months up to 3 times
+const RETRY_DELAYS = [2000, 5000, 10000]; // Exponential backoff: 2s, 5s, 10s
+
+// Track retry attempts per month
+const retryCount = {};
+const failedMonths = new Set();
+
+// Queue management for parallelism control
+let monthQueue = [];
+let queueProcessing = false;
+
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
+
+function updateProgress() {
+    const percentage = (completedCount / 12) * 100;
+    progressBar.style.width = percentage + '%';
+    progressText.textContent = `${completedCount}/12 months`;
+}
+
+function updateBadge(monthNum, status, retryNum = null) {
+    const badge = document.querySelector(`[data-month="${monthNum}"]`);
+    if (!badge) return;
+
+    badge.classList.remove('bg-secondary', 'bg-warning', 'bg-success', 'bg-danger', 'bg-info');
+
+    if (status === 'processing') {
+        badge.classList.add('bg-warning');
+        const retryText = retryNum ? ` (Retry ${retryNum})` : '';
+        badge.innerHTML = `${monthNum} <i class="fas fa-spinner fa-spin"></i>${retryText}`;
+    } else if (status === 'completed') {
+        badge.classList.add('bg-success');
+        badge.innerHTML = `${monthNum} <i class="fas fa-check"></i>`;
+    } else if (status === 'retrying') {
+        badge.classList.add('bg-info');
+        badge.innerHTML = `${monthNum} <i class="fas fa-sync-alt fa-spin"></i>`;
+    } else if (status === 'failed') {
+        badge.classList.add('bg-danger');
+        badge.innerHTML = `${monthNum} <i class="fas fa-times"></i>`;
+    }
+}
+
+async function generateMonth(monthNum, attemptNum = 1) {
+    const isRetry = attemptNum > 1;
+    console.log(`🚀 ${isRetry ? 'Retrying' : 'Starting'} generation for month ${monthNum}... (Attempt ${attemptNum}/${MAX_RETRIES})`);
+
+    updateBadge(monthNum, 'processing', isRetry ? attemptNum : null);
+    activeRequests++;
+
+    try {
+        const response = await fetch(`/api/generate/month/${monthNum}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.status === 'completed') {
+            console.log(`✅ Month ${monthNum} completed! (${data.image_size} bytes)${isRetry ? ' after retry' : ''}`);
+            completedCount++;
+            failedMonths.delete(monthNum);
+            delete retryCount[monthNum];
+            updateProgress();
+            updateBadge(monthNum, 'completed');
+        } else {
+            throw new Error(data.error || 'Generation failed');
+        }
+
+    } catch (error) {
+        console.error(`❌ Month ${monthNum} failed (Attempt ${attemptNum}):`, error.message);
+
+        // Track retry attempts
+        retryCount[monthNum] = attemptNum;
+
+        // Retry logic with exponential backoff
+        if (attemptNum < MAX_RETRIES) {
+            const delay = RETRY_DELAYS[attemptNum - 1];
+            console.log(`🔄 Will retry month ${monthNum} in ${delay / 1000} seconds...`);
+            updateBadge(monthNum, 'retrying');
+
+            setTimeout(() => {
+                // Add to front of queue for priority retry
+                monthQueue.unshift({monthNum, attemptNum: attemptNum + 1});
+                processQueue();
+            }, delay);
+        } else {
+            // Max retries exceeded
+            console.error(`💀 Month ${monthNum} failed after ${MAX_RETRIES} attempts`);
+            failedCount++;
+            failedMonths.add(monthNum);
+            updateBadge(monthNum, 'failed');
+        }
+    } finally {
+        activeRequests--;
+        processQueue(); // Start next month from queue
+        checkCompletion();
+    }
+}
+
+function processQueue() {
+    // Start next months from queue if we have capacity
+    while (activeRequests < MAX_PARALLEL && monthQueue.length > 0) {
+        const next = monthQueue.shift();
+        // Handle both month numbers and retry objects
+        if (typeof next === 'object') {
+            console.log(`📤 Dequeuing retry for month ${next.monthNum} attempt ${next.attemptNum} (${monthQueue.length} remaining)`);
+            generateMonth(next.monthNum, next.attemptNum);
+        } else {
+            console.log(`📤 Dequeuing month ${next} (${monthQueue.length} remaining in queue)`);
+            generateMonth(next);
+        }
+    }
+}
+
+function checkCompletion() {
+    // Check if ALL requests are done (including retries)
+    if (activeRequests === 0 && monthQueue.length === 0) {
+        const totalDone = completedCount + failedMonths.size;
+
+        if (totalDone >= 12) {
+            console.log(`🎉 Generation complete! ${completedCount} succeeded, ${failedMonths.size} failed`);
+
+            if (failedMonths.size > 0) {
+                console.error(`⚠️ Failed months: ${Array.from(failedMonths).join(', ')}`);
+                alert(`⚠️ Warning: ${failedMonths.size} month(s) failed to generate after ${MAX_RETRIES} attempts. Proceeding to preview with ${completedCount} successful months.`);
+            }
+
+            setTimeout(() => {
+                window.location.href = '{{ url_for("projects.preview") }}';
+            }, 1500);
+        }
+    }
+}
+
+// Initialize: Start generating all pending months
+function startGeneration() {
+    const pendingMonths = [];
+
+    // Find all pending months
+    for (let i = 1; i <= 12; i++) {
+        const monthData = months.find(m => m.month_number === i);
+        if (!monthData || monthData.generation_status !== 'completed') {
+            pendingMonths.push(i);
+        }
+    }
+
+    console.log(`📋 Generating ${pendingMonths.length} months`);
+    console.log(`⚡ Parallel generation: ${Math.min(pendingMonths.length, MAX_PARALLEL)} months at a time (${pendingMonths.length} total)`);
+    console.log(`🔄 Auto-retry enabled: Up to ${MAX_RETRIES} attempts per month`);
+
+    // Add all pending months to queue
+    monthQueue = [...pendingMonths];
+    console.log(`📥 Queued ${monthQueue.length} months for generation`);
+
+    // Start initial batch (MAX_PARALLEL at a time)
+    processQueue();
+}
+
+// Initialize progress
+updateProgress();
+
+// Check if we need to start generation
+if (completedCount < 12) {
+    console.log('🚀 Starting MAXIMUM PARALLEL AI generation...');
+    setTimeout(startGeneration, 1000);
+} else {
+    // All already complete, redirect
+    console.log('✅ All months already complete!');
+    window.location.href = '{{ url_for("projects.preview") }}';
+}
+</script>
+{% endblock %}

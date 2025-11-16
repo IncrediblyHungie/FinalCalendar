@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block title %}Generating Calendar{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h1 class="mb-3" style="color: #192636; text-align: center; font-family: Inter; font-size: 54px; font-style: normal; font-weight: 700; line-height: 120%;">Creating your hunk...</h1>
+
+                    <p class="mb-4" style="color: #5A697B; text-align: center; font-family: Inter; font-size: 20px; font-style: normal; font-weight: 400; line-height: 140%;">Hang tight while your hunk hits the gym.</p>
+
+                    <!-- Pink Spiral Progress Bar -->
+                    <div class="progress mb-3" style="height: 12px; background-color: #EFEFEF; border-radius: 100px; overflow: hidden;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                             role="progressbar"
+                             id="progressBar"
+                             style="width: 0%; background-color: #F827A8;">
+                        </div>
+                    </div>
+
+                    <!-- Fun Loading Message with Emoji -->
+                    <div id="loadingMessage" class="mb-4" style="color: #6B7280; font-size: 20px; font-weight: 500; min-height: 30px; transition: opacity 0.5s ease-in-out;">
+                        <span id="loadingEmoji">🧘</span> <span id="loadingText">Getting a tan...</span>
+                    </div>
+
+                    <!-- Progress Counter -->
+                    <div id="progressCounter" class="mb-2" style="color: #1A1A1A; font-size: 16px; font-weight: 600; text-align: center;">
+                        <span id="completedCount">0</span>/<span id="totalCount">0</span> images completed (<span id="percentComplete">0</span>%)
+                    </div>
+
+                    <!-- Mockup Generation Loading State -->
+                    <div id="mockupLoading" class="alert alert-info d-none" role="alert">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div>
+                                <strong>Creating realistic calendar preview...</strong><br>
+                                <small>Generating product mockup so you can see exactly what you'll receive! (~15 seconds)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generation Status - Hidden but kept for debugging -->
+                    <div class="generation-status d-none">
+                        <h5 class="mb-3" style="color: #212529;">Generation Progress:</h5>
+                        <div class="row g-2 justify-content-center">
+                            {% for month in months | sort(attribute='month_number') %}
+                            <div class="col-3">
+                                <div class="month-status-badge
+                                    {% if month.generation_status == 'completed' %}bg-success
+                                    {% elif month.generation_status == 'processing' %}bg-warning
+                                    {% elif month.generation_status == 'failed' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}"
+                                    data-month="{{ month.month_number }}">
+                                    {{ month.month_number }}
+                                    {% if month.generation_status == 'completed' %}
+                                        <i class="fas fa-check"></i>
+                                    {% elif month.generation_status == 'processing' %}
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    {% elif month.generation_status == 'failed' %}
+                                        <i class="fas fa-times"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Auto-redirects when complete - no manual check needed -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// LOCAL BEAST MODE: ALL 12 MONTHS AT ONCE! 🔥
+const months = {{ months | tojson }};
+const generationStage = '{{ generation_stage }}';
+let completedCount = months.filter(m => m.generation_status === 'completed').length;
+let failedCount = 0;
+let activeRequests = 0;
+const MAX_PARALLEL = 4; // Parallel generation - 4 at a time (4 CPU cores available!)
+const MAX_RETRIES = 3;
+const RETRY_DELAYS = [2000, 5000, 10000];
+
+// Track retry attempts per month
+const retryCount = {};
+const failedMonths = new Set();
+
+// Queue management
+let monthQueue = [];
+
+const progressBar = document.getElementById('progressBar');
+
+// Fun loading messages cycling
+const loadingMessages = [
+    { emoji: '🥵', text: 'Hitting the gym...' },
+    { emoji: '🔥', text: 'Getting undressed...' },
+    { emoji: '💪', text: 'Flexing muscles...' },
+    { emoji: '✨', text: 'Applying oil...' },
+    { emoji: '📸', text: 'Striking a pose...' },
+    { emoji: '😏', text: 'Unleashing the charm...' },
+    { emoji: '🏋️', text: 'Adding more abs...' },
+    { emoji: '😍', text: 'Perfecting the smolder...' },
+    { emoji: '🌡️', text: 'Cranking up the sexy...' },
+    { emoji: '💪', text: 'Buffing up...' },
+    { emoji: '📐', text: 'Working the angles...' },
+    { emoji: '📞', text: 'Dialing up the heat...' },
+    { emoji: '🌶️', text: 'Bringing the spice...' },
+    { emoji: '💯', text: 'Flexing harder...' },
+    { emoji: '👀', text: 'Turning heads...' },
+    { emoji: '🧘', text: 'Learning to fly...' },
+    { emoji: '😳', text: 'Getting a tan...' }
+];
+
+let messageIndex = 0;
+let messageInterval = null;
+
+function updateLoadingMessage() {
+    const loadingMessageEl = document.getElementById('loadingMessage');
+    const message = loadingMessages[messageIndex];
+
+    // Fade out
+    loadingMessageEl.style.opacity = '0';
+
+    // Wait for fade out, then update text and fade in
+    setTimeout(() => {
+        document.getElementById('loadingEmoji').textContent = message.emoji;
+        document.getElementById('loadingText').textContent = message.text;
+        loadingMessageEl.style.opacity = '1';
+    }, 500); // Match CSS transition duration
+
+    messageIndex = (messageIndex + 1) % loadingMessages.length;
+}
+
+// Start cycling messages every 3 seconds (longer delay for readability)
+messageInterval = setInterval(updateLoadingMessage, 3000);
+updateLoadingMessage(); // Show first message immediately
+
+// Calculate total expected images based on generation stage
+function getTotalExpected() {
+    if (generationStage === 'preview_only') {
+        return 3;  // Only generating Jan, Feb, Mar
+    } else {
+        return months.length;  // Generating all remaining months (should be 13 total)
+    }
+}
+
+function updateProgress() {
+    const totalExpected = getTotalExpected();
+    const percentage = Math.round((completedCount / totalExpected) * 100);
+    progressBar.style.width = percentage + '%';
+
+    // Update progress counter display
+    document.getElementById('completedCount').textContent = completedCount;
+    document.getElementById('totalCount').textContent = totalExpected;
+    document.getElementById('percentComplete').textContent = percentage;
+}
+
+function updateBadge(monthNum, status, retryNum = null) {
+    const badge = document.querySelector(`[data-month="${monthNum}"]`);
+    if (!badge) return;
+
+    badge.classList.remove('bg-secondary', 'bg-warning', 'bg-success', 'bg-danger', 'bg-info');
+
+    if (status === 'processing') {
+        badge.classList.add('bg-warning');
+        const retryText = retryNum ? ` (Retry ${retryNum})` : '';
+        badge.innerHTML = `${monthNum} <i class="fas fa-spinner fa-spin"></i>${retryText}`;
+    } else if (status === 'completed') {
+        badge.classList.add('bg-success');
+        badge.innerHTML = `${monthNum} <i class="fas fa-check"></i>`;
+    } else if (status === 'retrying') {
+        badge.classList.add('bg-info');
+        badge.innerHTML = `${monthNum} <i class="fas fa-sync-alt fa-spin"></i>`;
+    } else if (status === 'failed') {
+        badge.classList.add('bg-danger');
+        badge.innerHTML = `${monthNum} <i class="fas fa-times"></i>`;
+    }
+}
+
+async function generateMonth(monthNum, attemptNum = 1) {
+    const isRetry = attemptNum > 1;
+    console.log(`🚀 ${isRetry ? 'Retrying' : 'Starting'} month ${monthNum} (Attempt ${attemptNum}/${MAX_RETRIES})`);
+
+    updateBadge(monthNum, 'processing', isRetry ? attemptNum : null);
+    activeRequests++;
+
+    try {
+        const response = await fetch(`/api/generate/month/${monthNum}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.status === 'completed') {
+            console.log(`✅ Month ${monthNum} done! (${data.image_size} bytes)${isRetry ? ' after retry' : ''}`);
+            completedCount++;
+            failedMonths.delete(monthNum);
+            delete retryCount[monthNum];
+            updateProgress();
+            updateBadge(monthNum, 'completed');
+        } else {
+            throw new Error(data.error || 'Generation failed');
+        }
+
+    } catch (error) {
+        console.error(`❌ Month ${monthNum} failed (Attempt ${attemptNum}):`, error.message);
+
+        retryCount[monthNum] = attemptNum;
+
+        if (attemptNum < MAX_RETRIES) {
+            const delay = RETRY_DELAYS[attemptNum - 1];
+            console.log(`🔄 Retrying month ${monthNum} in ${delay / 1000}s...`);
+            updateBadge(monthNum, 'retrying');
+
+            setTimeout(() => {
+                monthQueue.unshift({monthNum, attemptNum: attemptNum + 1});
+                processQueue();
+            }, delay);
+        } else {
+            console.error(`💀 Month ${monthNum} failed after ${MAX_RETRIES} attempts`);
+            failedCount++;
+            failedMonths.add(monthNum);
+            updateBadge(monthNum, 'failed');
+        }
+    } finally {
+        activeRequests--;
+        processQueue();
+        await checkCompletion();  // Properly await async completion check
+    }
+}
+
+function processQueue() {
+    while (activeRequests < MAX_PARALLEL && monthQueue.length > 0) {
+        const next = monthQueue.shift();
+        if (typeof next === 'object') {
+            console.log(`📤 Retry queue: month ${next.monthNum} attempt ${next.attemptNum}`);
+            generateMonth(next.monthNum, next.attemptNum);
+        } else {
+            console.log(`📤 Starting month ${next}`);
+            generateMonth(next);
+        }
+    }
+}
+
+async function generateMockups() {
+    console.log('🎨 Starting mockup generation...');
+
+    // Show loading indicator
+    const mockupLoading = document.getElementById('mockupLoading');
+    mockupLoading.classList.remove('d-none');
+
+    // Update loading message to show mockup generation
+    document.getElementById('loadingEmoji').textContent = '🎨';
+    document.getElementById('loadingText').textContent = 'Creating calendar preview...';
+
+    try {
+        const response = await fetch('/api/generate/mockup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`✅ Mockup generation complete! ${data.mockup_count} mockup images created`);
+            mockupLoading.classList.add('d-none');
+            document.getElementById('loadingEmoji').textContent = '✅';
+            document.getElementById('loadingText').textContent = 'Preview ready!';
+            return true;
+        } else {
+            console.error('❌ Mockup generation failed:', data.error);
+            mockupLoading.classList.add('d-none');
+            // Continue anyway - preview page will show individual images
+            return false;
+        }
+
+    } catch (error) {
+        console.error('❌ Mockup generation error:', error);
+        mockupLoading.classList.add('d-none');
+        // Continue anyway - preview page will show individual images
+        return false;
+    }
+}
+
+let redirecting = false;  // Prevent multiple redirects
+
+async function checkCompletion() {
+    // Only check if all active work is done
+    if (activeRequests === 0 && monthQueue.length === 0 && !redirecting) {
+        const totalExpected = getTotalExpected();
+        const totalDone = completedCount + failedMonths.size;
+
+        if (totalDone >= totalExpected) {
+            redirecting = true;  // Prevent multiple completion checks
+            console.log(`🎉 Complete! ${completedCount} succeeded, ${failedMonths.size} failed`);
+
+            // Stop cycling loading messages
+            if (messageInterval) {
+                clearInterval(messageInterval);
+                messageInterval = null;
+            }
+
+            // Log failures but don't alert user (expected behavior for 3-month preview)
+            if (failedMonths.size > 0) {
+                console.error(`⚠️ Failed: ${Array.from(failedMonths).join(', ')}`);
+                // No alert - expected when generating only 3 preview months
+            }
+
+            // Generate mockups only if we have all 13 months (full calendar)
+            if (generationStage === 'generating_full' && completedCount >= 12) {
+                console.log('🎨 Generating calendar mockup preview...');
+                document.getElementById('loadingEmoji').textContent = '🎨';
+                document.getElementById('loadingText').textContent = 'Creating calendar preview...';
+
+                try {
+                    await generateMockups();
+                    console.log('✅ Mockup generation complete!');
+                } catch (error) {
+                    console.error('⚠️ Mockup generation failed, but continuing:', error);
+                    // Continue anyway - preview page will show individual images
+                }
+            }
+
+            // Redirect immediately after mockup completes
+            console.log('🚀 Redirecting to preview page...');
+            document.getElementById('loadingEmoji').textContent = '🚀';
+            document.getElementById('loadingText').textContent = 'Redirecting to preview...';
+            window.location.href = '{{ url_for("projects.preview") }}';
+        }
+    }
+}
+
+// Initialize: Start generating all pending images (cover + months)
+function startGeneration() {
+    const pendingMonths = [];
+
+    for (let i = 0; i <= 12; i++) {
+        const monthData = months.find(m => m.month_number === i);
+        if (!monthData || monthData.generation_status !== 'completed') {
+            pendingMonths.push(i);
+        }
+    }
+
+    console.log(`🔥 4X PARALLEL BEAST MODE: Generating ${pendingMonths.length} images (cover + months)`);
+    console.log(`📋 Parallel generation: ${MAX_PARALLEL} images at a time!`);
+    console.log(`💪 Upgraded to 4 CPUs + 2GB RAM - BLAZING FAST!`);
+
+    monthQueue = [...pendingMonths];
+    console.log(`📥 Queued ${monthQueue.length} images`);
+
+    processQueue();
+}
+
+// Initialize progress
+updateProgress();
+
+// Start generation if needed, or redirect if already complete
+const totalExpected = getTotalExpected();
+if (completedCount < totalExpected) {
+    console.log('🚀 Starting BEAST MODE generation...');
+    setTimeout(startGeneration, 1000);
+} else {
+    // All images already complete - generate mockup and redirect
+    console.log('✅ All images already complete! Preparing preview...');
+
+    // Stop cycling loading messages
+    if (messageInterval) {
+        clearInterval(messageInterval);
+        messageInterval = null;
+    }
+
+    document.getElementById('loadingEmoji').textContent = '✅';
+    document.getElementById('loadingText').textContent = 'Preparing preview...';
+
+    (async () => {
+        try {
+            // Generate mockup only if we have full calendar (13 months)
+            if (generationStage === 'generating_full' && completedCount >= 12) {
+                console.log('🎨 Generating calendar mockup...');
+                await generateMockups();
+            }
+            console.log('🚀 Redirecting to preview...');
+            document.getElementById('loadingEmoji').textContent = '🚀';
+            document.getElementById('loadingText').textContent = 'Redirecting to preview...';
+            window.location.href = '{{ url_for("projects.preview") }}';
+        } catch (error) {
+            console.error('⚠️ Error during redirect:', error);
+            // Redirect anyway even if mockup fails
+            window.location.href = '{{ url_for("projects.preview") }}';
+        }
+    })();
+}
+</script>
+{% endblock %}

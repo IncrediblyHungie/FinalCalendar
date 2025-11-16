@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+
+# Environment
+.env
+key.txt
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+calendar.db
+
+# Uploads and output
+uploads/*
+!uploads/.gitkeep
+output/*
+!output/.gitkeep
+static/uploads/
+
+# Sample generation (don't commit reference faces or test samples)
+reference_faces/
+sample_output/
+marketing_samples/
+social_media/
+
+# Models
+models/*
+!models/.gitkeep
+!models/download_models.py
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Migration
+migrations/versions/
+
+# Railway
+.railway/
+
+# Sensitive files with API keys
+DEPLOYMENT_TOKENS.md
+test_*.py
+run_local.sh
+test_gemini*.py

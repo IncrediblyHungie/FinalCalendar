@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Mobile Cart Styling - Center and Stack Items */
+@media (max-width: 991px) {
+    /* Center cart items container on mobile */
+    .cart-items-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    /* Stack cart item elements vertically on mobile */
+    .cart-item .row {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    /* Image section - full width, centered */
+    .cart-item .col-md-3 {
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 20px;
+    }
+
+    /* Product details - full width, centered */
+    .cart-item .col-md-6 {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    /* Price and actions - full width, centered */
+    .cart-item .col-md-3 {
+        width: 100%;
+        text-align: center !important;
+    }
+
+    /* Order summary - full width on mobile */
+    .order-summary-container {
+        max-width: 600px;
+        margin: 30px auto 0 auto;
+    }
+
+    /* Remove sticky positioning on mobile */
+    .card.sticky-top {
+        position: static !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-5 text-dark">
+        Your Shopping Cart
+    </h1>
+
+    {% if cart_items %}
+    <!-- Cart Items -->
+    <div class="row">
+        <div class="col-lg-8 cart-items-container">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h4 class="card-title mb-4">Cart Items ({{ cart_items|length }})</h4>
+
+                    {% for item in cart_items %}
+                    <div class="cart-item mb-4 pb-4 border-bottom" data-item-id="{{ item.id }}">
+                        <div class="row align-items-center">
+                            <!-- Product Image (Printify Mockup) -->
+                            <div class="col-md-3">
+                                {% set mockup_url = None %}
+                                {% if preview_mockups and item.product_type in preview_mockups %}
+                                    {% set mockup_data = preview_mockups[item.product_type] %}
+                                    {% set mockup_images = mockup_data.mockup_images %}
+                                    {# Wall Calendar: mockup #8 (index 7) #}
+                                    {% set mockup_index = 7 %}
+                                    {% if mockup_images and mockup_index < mockup_images|length %}
+                                        {% set mockup_url = mockup_images[mockup_index].src %}
+                                    {% elif mockup_images %}
+                                        {% set mockup_url = mockup_images[0].src %}
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if mockup_url %}
+                                <!-- Display Printify-generated mockup (preferred) -->
+                                <img src="{{ mockup_url }}"
+                                     class="img-fluid rounded"
+                                     alt="Calendar Mockup"
+                                     style="max-height: 200px; object-fit: contain;">
+                                {% elif item.has_cover_image %}
+                                <!-- Fallback to cover image if mockup not available -->
+                                <img src="{{ url_for('api.get_cart_project_cover', project_id=item.project_id) }}"
+                                     class="img-fluid rounded"
+                                     alt="Calendar Preview"
+                                     style="max-height: 200px; object-fit: cover;">
+                                {% else %}
+                                <!-- Fallback placeholder -->
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                                     style="height: 200px;">
+                                    <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Product Details -->
+                            <div class="col-md-6">
+                                <h5 class="mb-2 text-dark">
+                                    Wall Calendar 2026
+                                </h5>
+                                <p class="text-muted mb-0">
+                                    <small>
+                                        <i class="fas fa-clock me-1"></i>
+                                        Created: {{ item.project_created_at[:10] }}
+                                    </small>
+                                </p>
+                            </div>
+
+                            <!-- Price and Actions -->
+                            <div class="col-md-3 text-end">
+                                <!-- Quantity Selector -->
+                                <div class="mb-3 d-flex flex-column align-items-center align-items-md-end">
+                                    <label for="quantity-{{ item.id }}" class="form-label small text-muted mb-1">Quantity</label>
+                                    <input type="number"
+                                           class="form-control quantity-input text-center"
+                                           id="quantity-{{ item.id }}"
+                                           data-item-id="{{ item.id }}"
+                                           value="{{ item.quantity }}"
+                                           min="1"
+                                           max="99"
+                                           style="width: 80px;">
+                                </div>
+
+                                <!-- Price Display -->
+                                <h4 class="text-primary mb-1">
+                                    {% if item.quantity > 1 %}
+                                    <small class="d-block text-muted" style="font-size: 0.9rem;">
+                                        ${{ "%.2f"|format(item.price) }} × {{ item.quantity }}
+                                    </small>
+                                    {% endif %}
+                                    <del class="text-muted">${{ "%.2f"|format((30.00 if item.price == 22.50 else 35.33) * item.quantity) }}</del>
+                                    ${{ "%.2f"|format(item.price * item.quantity) }}
+                                    <small class="text-success d-block">(25% off)</small>
+                                </h4>
+                                <button class="btn btn-sm btn-outline-danger remove-item-btn"
+                                        data-item-id="{{ item.id }}">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Continue Shopping -->
+            <div class="text-center mb-4">
+                <a href="{{ url_for('projects.create_another') }}" class="btn btn-outline-secondary btn-lg">
+                    Create Another Calendar
+                </a>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-lg-4 order-summary-container">
+            <div class="card shadow-lg sticky-top" style="top: 20px;">
+                <div class="card-body p-4">
+                    <h4 class="card-title mb-4">Order Summary</h4>
+
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Items ({{ cart_items|length }})</span>
+                        <span>${{ "%.2f"|format(cart_total) }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Shipping</span>
+                        <span class="text-success">FREE</span>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between mb-4">
+                        <strong>Total</strong>
+                        <strong class="text-primary">${{ "%.2f"|format(cart_total) }}</strong>
+                    </div>
+
+                    <button id="checkout-btn" class="btn btn-success btn-lg w-100 mb-3">
+                        Proceed to Checkout
+                    </button>
+
+                    <button id="clear-cart-btn" class="btn btn-outline-secondary btn-sm w-100">
+                        Clear Cart
+                    </button>
+
+                    <p class="text-muted mt-4 mb-0 small text-center">
+                        Secure payment via Stripe
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty Cart -->
+    <div class="text-center py-5">
+        <i class="fas fa-shopping-cart fa-5x text-muted mb-4"></i>
+        <h3 class="mb-3 text-dark">Your cart is empty</h3>
+        <p class="lead text-dark mb-4">
+            Create a custom calendar to get started!
+        </p>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-home me-2"></i>
+            Back to Home
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Update quantity when input changes
+document.querySelectorAll('.quantity-input').forEach(input => {
+    // Debounce timer to avoid excessive API calls
+    let debounceTimer;
+
+    input.addEventListener('change', async function() {
+        const itemId = this.dataset.itemId;
+        const quantity = parseInt(this.value);
+
+        // Validate quantity
+        if (quantity < 1 || quantity > 99) {
+            alert('Quantity must be between 1 and 99');
+            this.value = this.defaultValue;  // Reset to previous value
+            return;
+        }
+
+        // Clear any existing debounce timer
+        clearTimeout(debounceTimer);
+
+        // Debounce: wait 500ms before updating
+        debounceTimer = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/cart/update-quantity/${itemId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ quantity })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Reload page to update all prices
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to update quantity'));
+                    this.value = this.defaultValue;  // Reset to previous value
+                }
+            } catch (error) {
+                console.error('Update quantity error:', error);
+                alert('Failed to update quantity. Please try again.');
+                this.value = this.defaultValue;  // Reset to previous value
+            }
+        }, 500);
+    });
+});
+
+// Remove item from cart
+document.querySelectorAll('.remove-item-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const itemId = this.dataset.itemId;
+        const cartItem = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+
+        // Show loading
+        const originalHTML = this.innerHTML;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        this.disabled = true;
+
+        try {
+            const response = await fetch(`/api/cart/remove/${itemId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Remove item from DOM
+                cartItem.remove();
+
+                // Reload page if cart is now empty
+                if (data.cart_count === 0) {
+                    window.location.reload();
+                } else {
+                    // Update totals (simplified - reload for now)
+                    window.location.reload();
+                }
+            } else {
+                alert('Error: ' + (data.error || 'Failed to remove item'));
+                this.innerHTML = originalHTML;
+                this.disabled = false;
+            }
+        } catch (error) {
+            console.error('Remove item error:', error);
+            alert('Failed to remove item. Please try again.');
+            this.innerHTML = originalHTML;
+            this.disabled = false;
+        }
+    });
+});
+
+// Clear entire cart
+{% if cart_items %}
+document.getElementById('clear-cart-btn').addEventListener('click', async function() {
+    // Show loading
+    const originalHTML = this.innerHTML;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Clearing...';
+    this.disabled = true;
+
+    try {
+        const response = await fetch('/api/cart/clear', {
+            method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to clear cart'));
+            this.innerHTML = originalHTML;
+            this.disabled = false;
+        }
+    } catch (error) {
+        console.error('Clear cart error:', error);
+        alert('Failed to clear cart. Please try again.');
+        this.innerHTML = originalHTML;
+        this.disabled = false;
+    }
+});
+
+// Checkout cart
+document.getElementById('checkout-btn').addEventListener('click', async function() {
+    // Show loading
+    const originalHTML = this.innerHTML;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+    this.disabled = true;
+
+    try {
+        // Get saved customer info from localStorage
+        const savedInfo = localStorage.getItem('customerInfo');
+        let customerEmail = null;
+        if (savedInfo) {
+            try {
+                const { email } = JSON.parse(savedInfo);
+                // Only use email if it's valid (not empty and contains @ and .)
+                if (email && email.trim() && email.includes('@') && email.includes('.')) {
+                    customerEmail = email.trim();
+                    console.log('Auto-filling customer email:', customerEmail);
+                } else {
+                    console.log('Saved email is invalid, not using it');
+                }
+            } catch (e) {
+                console.error('Error loading customer info:', e);
+            }
+        }
+
+        const response = await fetch('/api/cart/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ customer_email: customerEmail })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Redirect to Stripe checkout
+            console.log('✓ Checkout session created:', data.session_id);
+            window.location.href = data.checkout_url;
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create checkout session'));
+            this.innerHTML = originalHTML;
+            this.disabled = false;
+        }
+    } catch (error) {
+        console.error('Checkout error:', error);
+        alert('Failed to start checkout. Please try again.');
+        this.innerHTML = originalHTML;
+        this.disabled = false;
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

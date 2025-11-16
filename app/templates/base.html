@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hunk of the Month{% endblock %} - AI Calendar Platform</title>
+
+    {% block head %}
+    <!-- Google Fonts - Inter, Space Grotesk & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome - Self-Hosted Version 6.7.1 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome-all.min.css') }}">
+
+    <!-- Figma Design System CSS (NEW) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/figma-theme.css') }}">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Apple Emoji Font -->
+    <style>
+        /* Add Apple Color Emoji as fallback for all text to ensure consistent emoji rendering */
+        body, *:not(i):not(.fa):not(.fas):not(.far):not(.fab):not(.fal):not(.fad) {
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important;
+        }
+
+        /* Font Awesome icons MUST use Font Awesome font - DO NOT OVERRIDE */
+        .fa, .fas, .far, .fab, .fal, .fad, i[class*="fa-"] {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+            font-weight: 900 !important;
+            font-style: normal !important;
+        }
+
+        .far {
+            font-weight: 400 !important;
+        }
+
+        .fab {
+            font-family: "Font Awesome 6 Brands" !important;
+            font-weight: 400 !important;
+        }
+
+        /* Specific font families with Apple emoji support */
+        h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, label {
+            font-family: inherit;
+        }
+    </style>
+    {% endblock %}
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Navigation Bar - White Background -->
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color: white; border-bottom: 1px solid rgba(0, 0, 0, 0.1); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}" style="color: #172434; font-family: Poppins; font-size: 23.911px; font-style: normal; font-weight: 700; line-height: normal;">
+                <img src="{{ url_for('static', filename='assets/images/logo/HOTMLOGO.png') }}" alt="Hunk of the Month" style="height: 44px; margin-right: 10px;">
+                <span class="d-none d-md-inline">Hunk of the Month</span>
+            </a>
+            <div class="ms-auto">
+                <a href="{{ url_for('projects.cart_page') }}" class="btn position-relative" style="background: transparent; border: 2px solid var(--accent-primary); color: var(--accent-primary); border-radius: 70px; padding: 6px 15px; width: 56px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                    <img src="{{ url_for('static', filename='assets/icons/shopping-cart.png') }}" alt="Cart" style="width: 20px; height: 20px;">
+                    <span class="cart-count-badge position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                          style="display: none; background: var(--accent-primary);">
+                        0
+                    </span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer - Figma Style -->
+    <footer class="text-center py-4 mt-5" style="background-color: white; border-top: 1px solid rgba(138, 154, 191, 0.2);">
+        <div class="container">
+            <!-- Instagram Icon -->
+            <div class="mb-3">
+                <a href="https://www.instagram.com/hunkofthemonthofficial/?igsh=NTc4MTIwNjQ2YQ%3D%3D" target="_blank" rel="noopener noreferrer" style="text-decoration: none; transition: opacity 0.3s ease; display: inline-block;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+                    <img src="{{ url_for('static', filename='assets/icons/instagram.png') }}" alt="Instagram" style="width: 32px; height: 32px;">
+                </a>
+            </div>
+
+            <p class="mb-2" style="color: black; font-size: 14px;">&copy; 2025 Hunk of the Month. AI-powered personalized calendars.</p>
+            <div style="color: black; font-size: 12px;">
+                Join 10,000+ people who've turned their favorites into calendars
+            </div>
+        </div>
+    </footer>
+
+    {% block scripts %}
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    <!-- Cart Badge Update -->
+    <script>
+    // Update cart count badge on page load
+    async function updateCartBadge() {
+        try {
+            const response = await fetch('/api/cart');
+            const data = await response.json();
+
+            const badge = document.querySelector('.cart-count-badge');
+            if (badge) {
+                if (data.success && data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.textContent = '0';
+                    badge.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Failed to update cart badge:', error);
+        }
+    }
+
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', updateCartBadge);
+    </script>
+    {% endblock %}
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

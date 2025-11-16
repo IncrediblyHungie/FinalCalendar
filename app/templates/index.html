@@ -1,0 +1,840 @@
+{% extends "base.html" %}
+
+{% block title %}Turn Your Man Into a Calendar{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Static Hero Image - Responsive */
+.hero-image-container {
+    background: white; /* White background for entire hero section */
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.hero-image-wrapper {
+    width: 100%;
+    height: auto;
+    background: white; /* White background for wrapper */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-bottom: 150px; /* Space for overlap effect */
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover; /* Fill entire container */
+}
+
+/* Show desktop hero by default */
+.hero-desktop {
+    display: block;
+}
+
+.hero-mobile {
+    display: none;
+}
+
+/* Mobile: Show mobile hero */
+@media (max-width: 768px) {
+    .hero-desktop {
+        display: none;
+    }
+
+    .hero-mobile {
+        display: block;
+    }
+
+    .hero-image-container {
+        background: white; /* White background for mobile */
+        padding: 40px 0 0 0;
+    }
+
+    .hero-image-wrapper {
+        padding-bottom: 100px;
+    }
+
+    .hero-image {
+        width: 100%;
+        height: auto;
+        object-fit: cover; /* Fill entire container */
+    }
+
+    /* Adjust hero section overlap for mobile */
+    .hero-figma {
+        margin-top: -200px !important;
+        padding-top: 250px !important;
+    }
+}
+
+/* Step Cards Styling */
+.step-card {
+    display: flex;
+    padding: 24px;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1 0 0;
+    border-radius: 14px;
+    border: 1px solid #EEE;
+    background: #FFF;
+    text-align: center;
+}
+
+/* Mobile: Stack cards vertically */
+@media (max-width: 768px) {
+    .steps-container {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .step-card {
+        flex: 1 0 100%;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* CTA Card Mobile Reordering */
+    .cta-card-container {
+        flex-direction: column !important;
+        gap: 24px !important;
+        padding: 24px !important;
+    }
+
+    .cta-heading {
+        display: block;
+        order: 1;
+    }
+
+    .cta-heading-desktop {
+        display: none !important;
+    }
+
+    .cta-image {
+        order: 2;
+    }
+
+    .cta-content {
+        order: 3;
+    }
+
+    .cta-image img {
+        width: 100% !important;
+        max-width: 300px !important;
+    }
+
+    /* Reduce spacing between carousel and "Make a hunk" section on mobile */
+    .make-hunk-section {
+        padding-top: var(--spacing-md) !important;
+    }
+
+    /* Reviews: Stack vertically on mobile */
+    .reviews-container {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+
+    .review-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: auto !important;
+    }
+}
+
+/* Desktop: Hide mobile heading, show desktop heading in content */
+@media (min-width: 769px) {
+    .cta-heading {
+        display: none;
+    }
+
+    .cta-heading-desktop {
+        display: block;
+    }
+
+    .cta-card-container {
+        align-items: center;
+    }
+}
+
+/* FAQ Accordion Styles */
+.faq-item {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    border: 1px solid #E5E7EB;
+}
+
+.faq-summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+
+.faq-summary::-webkit-details-marker {
+    display: none;
+}
+
+.faq-arrow {
+    display: flex;
+    padding: 7px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 100px;
+    background: linear-gradient(114deg, #FF4DA6 0%, #FF8C42 100%);
+    box-shadow: 0 -1px 1px 0 rgba(0, 0, 0, 0.12) inset, 0 1px 1.5px 0 rgba(255, 255, 255, 0.25) inset, 0 2px 6px 0 rgba(74, 58, 255, 0.10);
+    transition: all 0.3s ease;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.faq-arrow::after {
+    content: '↓';
+    font-size: 16px;
+    transition: transform 0.3s ease;
+    color: white;
+}
+
+/* Open state */
+.faq-item[open] .faq-arrow {
+    background: #F1F2F9;
+    box-shadow: 0 0.5px 1px 0 rgba(25, 33, 61, 0.07);
+}
+
+.faq-item[open] .faq-arrow::after {
+    transform: rotate(180deg);
+    color: #192636;
+}
+
+.faq-content {
+    overflow: hidden;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- STATIC HERO IMAGE: Responsive hero with overlap effect -->
+<div style="position: relative; z-index: 10;">
+    <div class="hero-image-container">
+        <div class="hero-image-wrapper">
+            <!-- Desktop Hero -->
+            <img src="{{ url_for('static', filename='assets/images/hero/DesktopHero.png') }}"
+                 alt="Hunk of the Month Calendar"
+                 class="hero-image hero-desktop">
+
+            <!-- Mobile Hero -->
+            <img src="{{ url_for('static', filename='assets/images/hero/MobileHero.png') }}"
+                 alt="Hunk of the Month Calendar"
+                 class="hero-image hero-mobile">
+        </div>
+    </div>
+</div>
+
+<!-- REMOVED OLD BROKEN CAROUSEL CODE -->
+<section style="display: none;">
+    <div>
+        <!-- First group of images -->
+        <div>
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='assets/images/carousel/january.jpeg') }}" alt="January Calendar">
+            </div>
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='assets/images/carousel/february.jpeg') }}" alt="February Calendar">
+            </div>
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='assets/images/carousel/march.jpeg') }}" alt="March Calendar">
+            </div>
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='assets/images/carousel/april.jpeg') }}" alt="April Calendar">
+            </div>
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='assets/images/carousel/may.jpeg') }}" alt="May Calendar">
+            </div>
+        </div>
+
+        <!-- Duplicate group for seamless loop -->
+        <div class="carousel-group" aria-hidden="true">
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='assets/images/carousel/january.jpeg') }}" alt="January Calendar">
+            </div>
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='assets/images/carousel/february.jpeg') }}" alt="February Calendar">
+            </div>
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='assets/images/carousel/march.jpeg') }}" alt="March Calendar">
+            </div>
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='assets/images/carousel/april.jpeg') }}" alt="April Calendar">
+            </div>
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='assets/images/carousel/may.jpeg') }}" alt="May Calendar">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Make a Hunk Section - WHITE BACKGROUND -->
+<section class="section-figma make-hunk-section" style="background-color: white; padding: var(--spacing-2xl) 0;">
+    <div style="max-width: 976px; margin: 0 auto; padding: 0 var(--spacing-md);">
+        <!-- Heading -->
+        <h2 style="color: #192636; text-align: center; font-family: Inter; font-size: 40px; font-style: normal; font-weight: 700; line-height: 110%; margin-bottom: var(--spacing-xs);">
+            Make a hunk in under 5 min ⏱️
+        </h2>
+
+        <!-- Subheading -->
+        <p style="color: #8494A6; text-align: center; font-family: Inter; font-size: 18px; font-style: normal; font-weight: 400; line-height: 140%; margin-bottom: var(--spacing-xl);">
+            (No gym membership required.)
+        </p>
+
+        <!-- Steps Container: 3 cards on desktop, stacked on mobile -->
+        <div class="steps-container" style="display: flex; gap: 24px; max-width: 1100px; margin: 0 auto; flex-wrap: wrap;">
+            <!-- Step 1: Upload his pics -->
+            <div class="step-card">
+                <div style="display: flex; width: 48px; height: 48px; justify-content: center; align-items: center; border-radius: 16777200px; background: rgba(255, 51, 102, 0.10); margin: 0 auto var(--spacing-sm);">
+                    <span style="font-size: 24px;">📸</span>
+                </div>
+                <h3 style="color: #192636; font-family: Inter; font-size: 18px; font-style: normal; font-weight: 500; line-height: 27px; letter-spacing: -0.439px; margin-bottom: var(--spacing-xs);">
+                    Upload his pics
+                </h3>
+                <p style="color: #8494A6; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 24px; letter-spacing: -0.312px; margin: 0;">
+                    Any photo works. Yes, even screenshots from his Instagram.
+                </p>
+            </div>
+
+            <!-- Step 2: Pick the hunk vibe -->
+            <div class="step-card">
+                <div style="display: flex; width: 48px; height: 48px; justify-content: center; align-items: center; border-radius: 16777200px; background: rgba(255, 51, 102, 0.10); margin: 0 auto var(--spacing-sm);">
+                    <span style="font-size: 24px;">🎭</span>
+                </div>
+                <h3 style="color: #192636; font-family: Inter; font-size: 18px; font-style: normal; font-weight: 500; line-height: 27px; letter-spacing: -0.439px; margin-bottom: var(--spacing-xs);">
+                    Pick the hunk vibe
+                </h3>
+                <p style="color: #8494A6; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 24px; letter-spacing: -0.312px; margin: 0;">
+                    Firefighter? Cowboy? Shirtless chef? Pick a vibe and commit.
+                </p>
+            </div>
+
+            <!-- Step 3: Watch the magic -->
+            <div class="step-card">
+                <div style="display: flex; width: 48px; height: 48px; justify-content: center; align-items: center; border-radius: 16777200px; background: rgba(255, 51, 102, 0.10); margin: 0 auto var(--spacing-sm);">
+                    <span style="font-size: 24px;">✨</span>
+                </div>
+                <h3 style="color: #192636; font-family: Inter; font-size: 18px; font-style: normal; font-weight: 500; line-height: 27px; letter-spacing: -0.439px; margin-bottom: var(--spacing-xs);">
+                    Watch the magic
+                </h3>
+                <p style="color: #8494A6; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 24px; letter-spacing: -0.312px; margin: 0;">
+                    See the transformation happen. We know, it's unhinged.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Carousel Section - WHITE BACKGROUND -->
+<section class="section-figma" style="background-color: white; padding-bottom: var(--spacing-2xl);">
+    <div style="max-width: 976px; margin: 0 auto; padding: 0 var(--spacing-md);">
+        <!-- Heading Container -->
+        <div style="margin-bottom: var(--spacing-xs);">
+            <h2 style="font-family: 'Space Grotesk', var(--font-family); font-weight: 700; font-size: 40px; line-height: 110%; text-align: center; color: #192636; margin-bottom: var(--spacing-xs);">
+                See how he could look 👇
+            </h2>
+        </div>
+
+        <!-- Subheading -->
+        <p style="font-family: 'Inter', var(--font-family); font-weight: 400; font-size: 18px; line-height: 140%; text-align: center; color: #8494A6; margin-bottom: var(--spacing-lg);">
+            12 months. 12 hunks. 1 lucky guy.
+        </p>
+
+        <!-- Carousel Container - Horizontal Scroll -->
+        <div style="overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px;">
+            <div style="display: flex; gap: 16px; padding-bottom: var(--spacing-md);">
+                <!-- Month 1 - January -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/1.png') }}"
+                             alt="January Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <!-- Month badge - upper left -->
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            JAN
+                        </div>
+                        <!-- Title and description - bottom left -->
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">The Gentleman 🥵</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Ring in the new year right.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 2 - February -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/2.png') }}"
+                             alt="February Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            FEB
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Cupid's Finest 💘</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Love at first sight.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 3 - March -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/3.png') }}"
+                             alt="March Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            MAR
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Wall Street King 💼</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Success looks good on him.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 4 - April -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/4.png') }}"
+                             alt="April Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            APR
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Hero Mode 🔥</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Saving more than kittens.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 5 - May -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/5.png') }}"
+                             alt="May Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            MAY
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Beach Rescue 🏖️</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Your personal lifeguard.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 6 - June -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/6.png') }}"
+                             alt="June Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            JUN
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Pool Boy Dreams 💦</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Service with a smile.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 7 - July -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/7.png') }}"
+                             alt="July Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            JUL
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Cowboy Up 🤠</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Ride into the sunset.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 8 - August -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/8.png') }}"
+                             alt="August Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            AUG
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Firefighter Hero 🚒</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Brave, bold, beautiful.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 9 - September -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/9.png') }}"
+                             alt="September Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            SEP
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Top Gun ✈️</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Danger is his zone.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 10 - October -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/10.png') }}"
+                             alt="October Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            OCT
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Wild Thing 🌕</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Full moon fever.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 11 - November -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/11.png') }}"
+                             alt="November Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            NOV
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Lumberjack Vibes 🪓</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Chop it like it's hot.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 12 - December -->
+                <div class="figma-carousel-card">
+                    <div class="figma-card-inner">
+                        <img src="{{ url_for('static', filename='assets/images/examples/12.png') }}"
+                             alt="December Calendar"
+                             class="figma-card-image">
+                        <div class="figma-card-overlay"></div>
+                        <div style="display: flex; padding: 6px 14px; justify-content: center; align-items: center; gap: 10px; position: absolute; left: 19px; top: 19px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.30); background: rgba(255, 255, 255, 0.10); color: #FFF; font-family: Inter; font-size: 14px; font-weight: 600;">
+                            DEC
+                        </div>
+                        <div style="position: absolute; left: 19px; bottom: 19px; text-align: left;">
+                            <div style="color: #FFF; font-family: Inter; font-size: 18px; font-weight: 700; line-height: normal; margin-bottom: 4px;">Hot Santa 🎅</div>
+                            <div style="color: #FFF; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 400; line-height: normal;">Making spirits bright.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll hint for mobile -->
+        <div style="text-align: center; color: #9CA3AF; font-size: 12px; margin-top: var(--spacing-sm);">
+            ← Swipe to see more →
+        </div>
+    </div>
+</section>
+
+<!-- Frame 2: TikTok/Features Section - NAVY BACKGROUND -->
+<section class="section-figma" style="background-color: #1E2947; padding: var(--spacing-2xl) 0;">
+    <div class="container-figma" style="max-width: 900px; text-align: center;">
+        <h2 style="color: white; font-weight: 600; font-size: 32px; margin-bottom: var(--spacing-md);">
+            See it in action
+        </h2>
+        <p style="color: #ABABAB; font-size: 18px; line-height: 1.6; margin-bottom: var(--spacing-xl);">
+            Watch real people transform into calendar hunks
+        </p>
+
+        <!-- TikTok embed -->
+        <div id="tiktok-embed-wrapper" style="max-width: 605px; margin: 0 auto;">
+            <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@colepark.er/video/7080263851064823086" data-video-id="7080263851064823086" style="max-width: 605px;min-width: 325px;margin: 0;" >
+                <section>
+                    <a target="_blank" title="@colepark.er" href="https://www.tiktok.com/@colepark.er?refer=embed">@colepark.er</a>
+                </section>
+            </blockquote>
+            <script async src="https://www.tiktok.com/embed.js"></script>
+        </div>
+    </div>
+</section>
+
+<style>
+/* Remove white card container from TikTok embed */
+#tiktok-embed-wrapper .tiktok-embed {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* FORCE HIDE the white card wrapper that TikTok adds */
+#tiktok-embed-wrapper [data-testid="card-component"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Target all possible card selectors */
+#tiktok-embed-wrapper .css-1hcx8jb,
+#tiktok-embed-wrapper .evf3f5612,
+#tiktok-embed-wrapper [data-e2e="video-v2-Card-CardContainer"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Remove all white/colored backgrounds from embed */
+#tiktok-embed-wrapper *:not(video):not(img):not(svg):not(path) {
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+/* Ensure video container has no background */
+#tiktok-embed-wrapper [id*="embed-video-container"],
+#tiktok-embed-wrapper [data-e2e="video-v2-home-ContainerWrapper"],
+#tiktok-embed-wrapper [data-e2e="video-v2-EmbedVideo-EmbedVideoWrapper"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+</style>
+
+<!-- FAQ Section - CREAM BACKGROUND -->
+<section class="section-figma" style="background-color: #FAF8F5; padding: var(--spacing-2xl) 0;">
+    <div style="max-width: 800px; margin: 0 auto; padding: 0 var(--spacing-md);">
+        <!-- Heading -->
+        <h2 style="color: #192636; text-align: center; font-family: Inter; font-size: 40px; font-style: normal; font-weight: 700; line-height: 110%; margin-bottom: var(--spacing-xl);">
+            Frequently asked questions 🤔
+        </h2>
+
+        <!-- FAQ Accordion -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- FAQ 1: Is this weird? -->
+            <details class="faq-item">
+                <summary class="faq-summary">
+                    <span style="color: #192636; font-family: Inter; font-size: 20px; font-style: normal; font-weight: 600; line-height: 135%;">
+                        Is this weird?
+                    </span>
+                    <span class="faq-arrow"></span>
+                </summary>
+                <div class="faq-content">
+                    <p style="color: #8494A6; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 166%; margin: 0; padding-top: 12px;">
+                        Oh, absolutely. But so is doomscrolling at 2am.
+                    </p>
+                </div>
+            </details>
+
+            <!-- FAQ 2: Will he be mad? -->
+            <details class="faq-item">
+                <summary class="faq-summary">
+                    <span style="color: #192636; font-family: Inter; font-size: 20px; font-style: normal; font-weight: 600; line-height: 135%;">
+                        Will he be mad?
+                    </span>
+                    <span class="faq-arrow"></span>
+                </summary>
+                <div class="faq-content">
+                    <p style="color: #8494A6; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 166%; margin: 0; padding-top: 12px;">
+                        Probably flattered. Possibly confused. Definitely memorable.
+                    </p>
+                </div>
+            </details>
+
+            <!-- FAQ 3: When would this make a good gift? -->
+            <details class="faq-item">
+                <summary class="faq-summary">
+                    <span style="color: #192636; font-family: Inter; font-size: 20px; font-style: normal; font-weight: 600; line-height: 135%;">
+                        When would this make a good gift?
+                    </span>
+                    <span class="faq-arrow"></span>
+                </summary>
+                <div class="faq-content">
+                    <p style="color: #8494A6; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 166%; margin: 0; padding-top: 12px;">
+                        Bachelorette parties, anniversaries, holidays, or that random Tuesday. Basically any time you want to give a gift people will actually remember.
+                    </p>
+                </div>
+            </details>
+
+            <!-- FAQ 4: How long does it take to ship? -->
+            <details class="faq-item">
+                <summary class="faq-summary">
+                    <span style="color: #192636; font-family: Inter; font-size: 20px; font-style: normal; font-weight: 600; line-height: 135%;">
+                        How long does it take to ship?
+                    </span>
+                    <span class="faq-arrow"></span>
+                </summary>
+                <div class="faq-content">
+                    <p style="color: #8494A6; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 166%; margin: 0; padding-top: 12px;">
+                        5-7 days
+                    </p>
+                </div>
+            </details>
+
+            <!-- FAQ 5: Can I return the calendar? -->
+            <details class="faq-item">
+                <summary class="faq-summary">
+                    <span style="color: #192636; font-family: Inter; font-size: 20px; font-style: normal; font-weight: 600; line-height: 135%;">
+                        Can I return the calendar?
+                    </span>
+                    <span class="faq-arrow"></span>
+                </summary>
+                <div class="faq-content">
+                    <p style="color: #8494A6; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 166%; margin: 0; padding-top: 12px;">
+                        No, sorry, all sales final.
+                    </p>
+                </div>
+            </details>
+        </div>
+    </div>
+</section>
+
+<!-- Customer Reviews Section -->
+<section class="section-figma" style="background: white; padding: var(--spacing-2xl) 0;">
+    <div style="display: flex; justify-content: center; padding: 0 var(--spacing-md);">
+        <div class="reviews-container" style="display: flex; max-width: 1000px; width: 100%; gap: 24px; justify-content: center; align-items: stretch;">
+
+            <!-- Review Card 1: Sam R. -->
+            <div class="review-card" style="display: flex; width: 300px; min-width: 300px; padding: 24px; flex-direction: column; align-items: flex-start; gap: 16px; align-self: stretch; border-radius: 10px; background: #FFF; box-shadow: 0 4px 10px 0 rgba(82, 82, 82, 0.10);">
+                <!-- 5 Stars -->
+                <div style="display: flex; gap: 4px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                </div>
+                <!-- Review Text -->
+                <p style="color: #192636; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 150%; margin: 0;">
+                    "Made one for my husband's 40th. We cried laughing. It's now in our living room. Our neighbors have seen it. No regrets."
+                </p>
+                <!-- Author Name -->
+                <p style="color: #5A697B; font-family: Inter; font-size: 14px; font-style: normal; font-weight: 600; line-height: 150%; margin: 0;">
+                    — Sam R.
+                </p>
+            </div>
+
+            <!-- Review Card 2: Cameron D. -->
+            <div class="review-card" style="display: flex; width: 300px; min-width: 300px; padding: 24px; flex-direction: column; align-items: flex-start; gap: 16px; align-self: stretch; border-radius: 10px; background: #FFF; box-shadow: 0 4px 10px 0 rgba(82, 82, 82, 0.10);">
+                <!-- 5 Stars -->
+                <div style="display: flex; gap: 4px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                </div>
+                <!-- Review Text -->
+                <p style="color: #192636; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 150%; margin: 0;">
+                    "Got one for my girlfriend with her favorite K-pop idol. She hung it in her cubicle. Her boss asked where to order one."
+                </p>
+                <!-- Author Name -->
+                <p style="color: #5A697B; font-family: Inter; font-size: 14px; font-style: normal; font-weight: 600; line-height: 150%; margin: 0;">
+                    — Cameron D.
+                </p>
+            </div>
+
+            <!-- Review Card 3: Quinn B. -->
+            <div class="review-card" style="display: flex; width: 300px; min-width: 300px; padding: 24px; flex-direction: column; align-items: flex-start; gap: 16px; align-self: stretch; border-radius: 10px; background: #FFF; box-shadow: 0 4px 10px 0 rgba(82, 82, 82, 0.10);">
+                <!-- 5 Stars -->
+                <div style="display: flex; gap: 4px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                    <img src="{{ url_for('static', filename='assets/icons/star.svg') }}" alt="Star" style="width: 24px; height: 24px;">
+                </div>
+                <!-- Review Text -->
+                <p style="color: #192636; font-family: Inter; font-size: 16px; font-style: normal; font-weight: 400; line-height: 150%; margin: 0;">
+                    "Made one of my mom and dad's anniversary with their wedding photos. They loved it so much they ordered 3 more for the family."
+                </p>
+                <!-- Author Name -->
+                <p style="color: #5A697B; font-family: Inter; font-size: 14px; font-style: normal; font-weight: 600; line-height: 150%; margin: 0;">
+                    — Quinn B.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Frame 3 Part 3: Final CTA Card Section with March Preview -->
+<section class="section-figma" style="background: white; padding: var(--spacing-2xl) 0;">
+    <div style="display: flex; justify-content: center; padding: 0 var(--spacing-md);">
+        <!-- CTA Card with March Image -->
+        <div class="cta-card-container" style="display: flex; max-width: 932px; width: 100%; padding: 40px; justify-content: center; align-items: center; gap: 40px; border-radius: 16px; border: 8px solid rgba(255, 255, 255, 0.20); background: #FFF;">
+
+            <!-- Heading (reordered on mobile) -->
+            <div class="cta-heading" style="flex: 1; text-align: center;">
+                <h2 style="color: #192636; font-family: Inter; font-size: 32px; font-style: normal; font-weight: 700; line-height: 110%; margin: 0;">
+                    Ready to make the calendar of your dreams?
+                </h2>
+            </div>
+
+            <!-- March Calendar Preview Image (reordered on mobile) -->
+            <div class="cta-image" style="flex-shrink: 0;">
+                <img src="{{ url_for('static', filename='assets/images/march-preview.jpg') }}"
+                     alt="March Calendar Preview"
+                     style="width: 300px; height: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+            </div>
+
+            <!-- CTA Content (reordered on mobile) -->
+            <div class="cta-content" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px;">
+                <!-- Heading (shown on desktop only) -->
+                <h2 class="cta-heading-desktop" style="color: #192636; font-family: Inter; font-size: 32px; font-style: normal; font-weight: 700; line-height: 110%; margin: 0;">
+                    Ready to make the calendar of your dreams?
+                </h2>
+
+                <!-- Subtext -->
+                <p style="color: #8494A6; text-align: center; font-family: Inter; font-size: 18px; font-style: normal; font-weight: 500; line-height: 140%; margin: 0;">
+                    Upload his pictures to get started.
+                </p>
+
+                <!-- CTA Button -->
+                <a href="{{ url_for('main.start') }}" style="display: flex; min-width: 240px; height: 45px; padding: 10.611px 52.239px; justify-content: center; align-items: center; gap: 8.162px; border-radius: 24.042px; background: linear-gradient(180deg, #F48D41 0%, #F827A8 100%); box-shadow: 0 0 32px 0 rgba(153, 23, 255, 0.32), 0 0 0.816px 3.265px rgba(255, 255, 255, 0.10), 0 -3.265px 1.632px 0 rgba(0, 0, 0, 0.25) inset, 0 1.632px 0.816px 0 rgba(255, 255, 255, 0.25) inset; text-decoration: none; color: white; font-family: Inter; font-size: 16px; font-weight: 600; white-space: nowrap;">
+                    Upload Photos →
+                </a>
+
+                <!-- Bottom Text -->
+                <p style="color: #8494A6; font-family: Inter; font-size: 14px; font-style: normal; font-weight: 500; line-height: 110%; margin: 0;">
+                    No login required. Preview first. Pay later.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Figma carousel uses native horizontal scroll - no JS needed -->
+{% endblock %}

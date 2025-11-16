@@ -1,0 +1,1568 @@
+{% extends "base.html" %}
+
+{% block title %}Preview Your Calendar{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Progress Steps -->
+    <div class="progress-steps mb-5">
+        <div class="step completed">
+            <div class="step-number"><i class="fas fa-check"></i></div>
+            <div class="step-label">Upload Photos</div>
+        </div>
+        <div class="step completed">
+            <div class="step-number"><i class="fas fa-check"></i></div>
+            <div class="step-label">Review Themes</div>
+        </div>
+        <div class="step completed">
+            <div class="step-number"><i class="fas fa-check"></i></div>
+            <div class="step-label">Generate</div>
+        </div>
+        <div class="step active">
+            <div class="step-number">4</div>
+            <div class="step-label">Preview</div>
+        </div>
+    </div>
+
+    <!-- STAGE 1: PREVIEW ONLY (3 Months + Cover) -->
+    {% if generation_status.stage == 'preview_only' %}
+    <!-- Preview Alert -->
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading">
+            <i class="fas fa-eye me-2"></i>
+            Here's Your FREE 3-Month Preview!
+        </h4>
+        <p class="mb-2">
+            Check out the first 3 months (January, February, March). If you love what you see, unlock ALL 12 months!
+        </p>
+        <p class="mb-0">
+            <i class="fas fa-clock me-1"></i>
+            <strong>Preview expires in: <span id="countdown-timer" class="text-danger">Loading...</span></strong>
+        </p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% elif generation_status.stage == 'generating_full' %}
+    <!-- Generating Alert -->
+    <div class="alert alert-warning" role="alert">
+        <h4 class="alert-heading">
+            <i class="fas fa-magic me-2"></i>
+            Generating Your Full Calendar...
+        </h4>
+        <p class="mb-3">
+            Hold tight! We're creating the cover + remaining 9 months (10 total). This takes about 5-10 minutes.
+        </p>
+        <div class="progress mb-2" style="height: 30px;">
+            <div id="generation-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated"
+                 role="progressbar"
+                 style="width: {{ generation_status.progress }}%">
+                <span id="progress-text">{{ generation_status.progress }}%</span>
+            </div>
+        </div>
+        <p class="mb-0 text-center">
+            <small id="progress-status">Generating month {{ generation_status.completed_months }} of {{ generation_status.total_months }}...</small>
+        </p>
+    </div>
+    {% elif generation_status.stage == 'fully_generated' %}
+    <!-- Success Message -->
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading">
+            <i class="fas fa-fire me-2"></i>
+            You're Now a Hunk for Every Month!
+        </h4>
+        <p class="mb-0">
+            All 12 transformations complete! Scroll down to see YOUR FACE on 12 ridiculously sexy hunks.
+            Warning: May cause uncontrollable laughter and sudden confidence boost!
+        </p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <!-- Calendar Preview -->
+    <div class="card shadow mb-5">
+        <div class="card-body p-5">
+            <h2 class="mb-3" style="color: #192636; text-align: center; font-family: Inter; font-size: 54px; font-style: normal; font-weight: 700; line-height: 120%; align-self: stretch;">
+                Review your hunk
+            </h2>
+            <p class="mb-4" style="color: #5A697B; text-align: center; font-family: Inter; font-size: 20px; font-style: normal; font-weight: 400; line-height: 140%;">
+                These are the images that will be in your calendar.
+            </p>
+
+            <!-- Calendar Grid (2-column layout matching Figma Review screen) -->
+            <div class="row g-3">
+                {% for month in months | selectattr('month_number', 'ne', 0) | sort(attribute='month_number') %}
+                <div class="col-12 col-md-6">
+                    <div class="calendar-month-card" data-month-id="{{ month.id }}" data-month-number="{{ month.month_number }}">
+                        <!-- Image First (Click to expand) -->
+                        <div class="month-image-container">
+                            <a href="#"
+                               class="image-preview-trigger"
+                               data-image-url="{{ url_for('api.get_month_image', month_id=month.id) }}"
+                               data-month-name="{{ month_names[month.month_number] }}"
+                               data-month-title="{{ monthly_themes[month.month_number]['title'] }}">
+                                <img src="{{ url_for('api.get_month_image', month_id=month.id) }}"
+                                     alt="{{ month_names[month.month_number] }}"
+                                     class="img-fluid calendar-image-clickable month-variant-image">
+                                <div class="image-overlay">
+                                    <img src="{{ url_for('static', filename='assets/icons/search.png') }}" alt="View" style="width: 40px; height: 40px;">
+                                </div>
+                            </a>
+
+                            <!-- Variant Navigation Dots -->
+                            <div class="variant-dots-container">
+                                {% set retry_count = month.get('retry_count', 0) %}
+                                {% set selected_index = month.get('selected_variant_index', 0) %}
+                                {% set total_variants = retry_count + 1 %}
+
+                                {% for i in range(total_variants) %}
+                                <span class="variant-dot {% if i == selected_index %}active{% endif %}"
+                                      data-variant-index="{{ i }}"
+                                      title="Variant {{ i + 1 }}"></span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <!-- Text Content Below Image -->
+                        <div class="month-content">
+                            <span class="month-name-badge">{{ month_names[month.month_number]|upper }}</span>
+                            <h5 class="month-title">{{ monthly_themes[month.month_number]['title'] }}</h5>
+                            <p class="month-description">{{ monthly_themes[month.month_number]['description'] }}</p>
+
+                            <!-- Retry Button -->
+                            {% set retry_count = month.get('retry_count', 0) %}
+                            <button class="btn btn-retry-generation {% if retry_count >= 2 %}disabled{% endif %}"
+                                    data-month-id="{{ month.id }}"
+                                    data-month-number="{{ month.month_number }}"
+                                    data-retry-count="{{ retry_count }}"
+                                    {% if retry_count >= 2 %}disabled{% endif %}>
+                                <i class="fas fa-redo-alt me-1"></i>
+                                {% if retry_count >= 2 %}
+                                    Max Retries Used ({{ retry_count }}/2)
+                                {% else %}
+                                    Try Another Version ({{ retry_count }}/2 used)
+                                {% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Call to Action -->
+    {% if generation_status.stage == 'preview_only' %}
+    <!-- UNLOCK GATE -->
+    <div class="card shadow-lg border-warning">
+        <div class="card-body p-5">
+            <h3 class="text-center mb-4" style="color: #192636; text-align: center; font-family: Inter; font-size: 32px; font-style: normal; font-weight: 700; line-height: 120%;">
+                Love what you see?
+            </h3>
+            <p class="text-center mb-4" style="color: #5A697B; text-align: center; font-family: Inter; font-size: 20px; font-style: normal; font-weight: 400; line-height: 140%;">
+                Enter your payment info to unlock the cover + remaining months.
+            </p>
+
+            {% if generation_status.has_payment_method %}
+            <!-- Payment already authorized - trigger generation -->
+            <div class="alert alert-success text-center" role="alert">
+                <i class="fas fa-check-circle fa-2x mb-3"></i>
+                <h5>Payment Method Authorized!</h5>
+                <p class="mb-3">Starting full calendar generation...</p>
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            {% else %}
+            <!-- Stripe Payment Element Container (includes Apple Pay, Google Pay, Cards) -->
+            <div id="unlock-form-container" class="mb-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <!-- Stripe Payment Element (includes Apple Pay, Google Pay, Link, Cards) -->
+                                <form id="payment-form">
+                                    <div id="payment-element" class="mb-3"></div>
+                                    <div id="payment-errors" class="text-danger mb-3" role="alert"></div>
+
+                                    <div class="d-flex justify-content-center">
+                                        <button id="unlock-button" type="submit" style="display: flex; width: 280px; height: 45px; padding: 10.611px 32px; justify-content: center; align-items: center; gap: 8.162px; flex-shrink: 0; border: none; border-radius: 24.042px; background: linear-gradient(180deg, #F48D41 0%, #F827A8 100%); box-shadow: 0 0 32px 0 rgba(153, 23, 255, 0.32), 0 0 0.816px 3.265px rgba(255, 255, 255, 0.10), 0 -3.265px 1.632px 0 rgba(0, 0, 0, 0.25) inset, 0 1.632px 0.816px 0 rgba(255, 255, 255, 0.25) inset; color: white; font-family: Inter; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                            <img src="{{ url_for('static', filename='assets/icons/unlock-icon.svg') }}" alt="" style="width: 14px; height: 14px; margin-right: 8px;">
+                                            Unlock all images
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <p class="text-muted text-center mt-3 mb-0 small">
+                                    <i class="fas fa-shield-alt me-1"></i>
+                                    Secured by Stripe. No charge until you order.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% elif generation_status.stage == 'generating_full' %}
+    <!-- GENERATING REMAINING MONTHS - Progress Bar -->
+    <div class="card shadow-lg border-info">
+        <div class="card-body p-5">
+            <div class="text-center mb-4">
+                <h3 class="mb-3">
+                    <i class="fas fa-magic fa-spin text-info me-2"></i>
+                    Creating Your Full Calendar...
+                </h3>
+                <p class="lead mb-4">
+                    Generating cover + remaining 9 months (10 total)
+                </p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress mb-3" style="height: 30px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-info"
+                     role="progressbar"
+                     id="remainingProgressBar"
+                     style="width: 0%">
+                    <span id="remainingProgressText">0/10 images</span>
+                </div>
+            </div>
+
+            <p class="text-center text-muted mb-0">
+                <small>This page will automatically refresh when all months are ready (~5 minutes)</small>
+            </p>
+        </div>
+    </div>
+    {% elif generation_status.stage == 'fully_generated' %}
+    <!-- PRODUCT SELECTION & CHECKOUT -->
+    <div class="card shadow-lg border-success">
+        <div class="card-body p-5">
+            <h3 class="text-center mb-4" style="color: #172439; font-family: Inter; font-weight: 600;">
+                Love This Calendar?
+            </h3>
+            <p class="text-center mb-4" style="font-family: Inter;">
+                Order Yours Today
+            </p>
+
+            <!-- Extract mockup data for use in product cards -->
+            {% if mockup_data %}
+                {% set all_wall_mockups = mockup_data.get('wall_calendar', {}).get('mockup_images', []) %}
+
+                <!-- Wall Calendar: Use mockups #3, #4, #5, #6 (indices 2, 3, 4, 5) -->
+                {% set wall_mockups = [all_wall_mockups[2], all_wall_mockups[3], all_wall_mockups[4], all_wall_mockups[5]] if all_wall_mockups|length > 5 else all_wall_mockups %}
+            {% endif %}
+
+            <!-- Product Selection - Wall Calendar Only -->
+            <div class="row mb-4 justify-content-center g-4">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card h-100 border-success border-3 product-option selected" data-product="wall_calendar" data-price="26.50">
+                        <div class="card-body text-center p-4">
+                            <div class="badge bg-success mb-2">MOST POPULAR</div>
+                            <!-- Wall Calendar Mockup Carousel -->
+                            {% if wall_mockups and wall_mockups|length > 0 %}
+                            <div class="mb-3 position-relative">
+                                <div class="mockup-carousel-container" id="wall-carousel" style="max-width: 600px; margin: 0 auto;">
+                                    {% for mockup in wall_mockups %}
+                                    <img src="{{ mockup.src }}"
+                                         alt="Wall Calendar Mockup View {{ loop.index }}"
+                                         class="mockup-carousel-image img-fluid rounded {% if loop.first %}active{% endif %}"
+                                         style="width: 100%; height: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: {% if loop.first %}block{% else %}none{% endif %};">
+                                    {% endfor %}
+                                </div>
+                                <!-- Carousel Dots -->
+                                <div class="mockup-carousel-dots mt-3">
+                                    {% for mockup in wall_mockups %}
+                                    <span class="mockup-dot {% if loop.first %}active{% endif %}" data-carousel="wall-carousel" data-index="{{ loop.index0 }}"></span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            <h5>Wall Calendar 2026</h5>
+                            <p class="text-muted mb-1">10.8" × 8.4"</p>
+                            <small class="text-muted d-block mb-2">270gsm semi-glossy paper, wire binding</small>
+                            <small class="text-success d-block mb-2"><i class="fas fa-flag-usa"></i> Made in USA</small>
+                            <h4 class="text-success mb-0"><del class="text-muted">$35.33</del> $26.50 <small class="text-success">(25% off)</small></h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Information (Optional) -->
+            <div class="card mb-4" style="border: 1px solid #E5E5E5; border-radius: 12px;">
+                <div class="card-body p-4">
+                    <h6 class="mb-3" style="font-family: Inter; font-weight: 600; color: #192636;">
+                        <i class="fas fa-user-circle me-2"></i>Optional: Save for faster checkout
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="customer-email" class="form-label" style="font-family: Inter; font-size: 14px; color: #5A697B;">Email</label>
+                            <input type="email" class="form-control" id="customer-email" placeholder="your@email.com" style="font-family: Inter;">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="customer-phone" class="form-label" style="font-family: Inter; font-size: 14px; color: #5A697B;">Mobile number</label>
+                            <input type="tel" class="form-control" id="customer-phone" placeholder="(555) 123-4567" style="font-family: Inter;">
+                        </div>
+                    </div>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" id="save-customer-info">
+                        <label class="form-check-label" for="save-customer-info" style="font-family: Inter; font-size: 14px; color: #5A697B;">
+                            Save my information for faster checkout
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <button id="add-to-cart-btn" class="btn btn-success btn-lg w-100">
+                        <i class="fas fa-cart-plus me-2"></i>
+                        Add to Cart (<span id="selected-price"><del>$35.33</del> $26.50</span>)
+                    </button>
+                    <small class="text-muted d-block mt-2 text-center">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Create calendars for different people!
+                    </small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <button id="order-now-btn" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        Order This Calendar Now
+                    </button>
+                    <small class="text-muted d-block mt-2 text-center">
+                        <i class="fas fa-truck me-1"></i>
+                        Skip cart, checkout immediately
+                    </small>
+                </div>
+            </div>
+
+            <!-- Secondary Actions -->
+            <div class="d-grid gap-2 col-md-8 mx-auto">
+                <button onclick="handleCreateAnother()" class="btn btn-outline-secondary" type="button">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Create Calendar for Another Person
+                </button>
+            </div>
+
+            <p class="text-muted mt-4 mb-0 text-center">
+                <i class="fas fa-clock me-1"></i>
+                Your calendar preview is saved for 24 hours
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="addedToCartModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Added to Cart!
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="fas fa-calendar-check fa-4x text-success mb-3"></i>
+                    <h4 style="color: #000000; font-weight: 600;">Calendar Added Successfully!</h4>
+                    <p class="lead mb-3" style="color: #000000;">You now have <strong><span id="modalCartCount">1</span> calendar(s)</strong> in your cart.</p>
+                    <p class="text-muted">
+                        Want to create calendars for other people?<br>
+                        Upload different photos for each person!
+                    </p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <a href="{{ url_for('projects.create_another') }}" class="btn btn-success btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Create Another Calendar
+                    </a>
+                    <a href="{{ url_for('projects.cart_page') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        View Cart & Checkout
+                    </a>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Continue Browsing
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" style="background: linear-gradient(135deg, #F73E97 0%, #FFA574 100%);">
+            <div class="modal-header border-0 justify-content-center position-relative">
+                <h5 class="modal-title text-white text-center fw-bold" id="imagePreviewModalLabel"></h5>
+                <button type="button" class="btn-close btn-close-white position-absolute end-0 me-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img src="" alt="Calendar Preview" id="modalPreviewImage" class="img-fluid w-100">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Stripe.js -->
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+// Initialize Stripe (if in preview_only stage)
+{% if generation_status.stage == 'preview_only' %}
+const stripe = Stripe('{{ config.STRIPE_PUBLISHABLE_KEY }}');
+let elements, paymentElement;
+
+// Initialize Payment Element after fetching client secret
+async function initializePaymentElement() {
+    try {
+        console.log('🔄 Initializing payment element...');
+
+        // Fetch Setup Intent client secret from server
+        const response = await fetch('/api/authorize-payment', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+
+        const data = await response.json();
+        console.log('📦 Setup Intent response:', data.success ? '✓ Success' : '✗ Failed');
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to initialize payment');
+        }
+
+        // Create Payment Element in setup mode with client secret
+        elements = stripe.elements({
+            clientSecret: data.client_secret,
+            appearance: {
+                theme: 'stripe',
+                variables: {
+                    colorPrimary: '#0570de',
+                    colorBackground: '#ffffff',
+                    colorText: '#30313d',
+                    colorDanger: '#df1b41',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    spacingUnit: '4px',
+                    borderRadius: '8px'
+                }
+            }
+        });
+
+        console.log('✓ Stripe elements created');
+
+        // Create Payment Element with Apple Pay, Google Pay, Link, and Cards
+        paymentElement = elements.create('payment', {
+            layout: {
+                type: 'tabs',
+                defaultCollapsed: false,
+                radios: false,
+                spacedAccordionItems: true
+            },
+            wallets: {
+                applePay: 'auto',   // Show Apple Pay if available on Safari/iOS
+                googlePay: 'auto'   // Show Google Pay if available on Chrome/Android
+            },
+            paymentMethodOrder: ['apple_pay', 'google_pay', 'link', 'card']  // Wallets first!
+        });
+
+        console.log('✓ Payment element created, mounting...');
+        paymentElement.mount('#payment-element');
+        console.log('✓ Payment element mounted successfully');
+
+        // Handle real-time validation errors
+        paymentElement.on('change', (event) => {
+            const displayError = document.getElementById('payment-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+
+        console.log('✅ Payment Element initialized with Apple Pay, Google Pay, Link, and Cards (wallets prioritized)');
+
+    } catch (error) {
+        console.error('❌ Failed to initialize Payment Element:', error);
+        const displayError = document.getElementById('payment-errors');
+        displayError.textContent = 'Failed to load payment form. Please refresh the page.';
+
+        // Disable the unlock button if payment element fails to load
+        const unlockButton = document.getElementById('unlock-button');
+        if (unlockButton) {
+            unlockButton.disabled = true;
+            unlockButton.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Payment form unavailable';
+        }
+    }
+}
+
+// Mount payment element after DOM loads
+document.addEventListener('DOMContentLoaded', () => {
+    const paymentContainer = document.getElementById('payment-element');
+    if (paymentContainer) {
+        initializePaymentElement();
+    }
+});
+
+// Countdown timer (48 hours)
+function startCountdown() {
+    const expiryTime = new Date('{{ generation_status.preview_expiry }}');
+    const timerElement = document.getElementById('countdown-timer');
+
+    if (!timerElement) return;
+
+    function updateTimer() {
+        const now = new Date();
+        const diff = expiryTime - now;
+
+        if (diff <= 0) {
+            timerElement.textContent = 'EXPIRED';
+            timerElement.classList.add('text-danger', 'fw-bold');
+            return;
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        timerElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+}
+
+// Unlock button handler
+async function handleUnlock(e) {
+    e.preventDefault();
+
+    const unlockButton = document.getElementById('unlock-button');
+    const originalHTML = unlockButton.innerHTML;
+
+    // Validate that elements are initialized
+    if (!elements) {
+        console.error('❌ Payment element not initialized!');
+        document.getElementById('payment-errors').textContent = 'Payment form not ready. Please refresh the page and try again.';
+        return;
+    }
+
+    // Disable button and show loading
+    unlockButton.disabled = true;
+    unlockButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+    try {
+        // Step 1: Confirm payment method with Stripe (Apple Pay, Google Pay, or Card)
+        console.log('Confirming payment method...');
+        unlockButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Confirming payment...';
+
+        const {setupIntent, error} = await stripe.confirmSetup({
+            elements,
+            confirmParams: {
+                return_url: window.location.origin + '/project/preview'
+            },
+            redirect: 'if_required'
+        });
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        console.log('✓ Payment method confirmed! Method:', setupIntent.payment_method);
+
+        // Step 2: Save payment method immediately (don't wait for webhook)
+        unlockButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving payment method...';
+
+        const saveResponse = await fetch('/api/save-payment-method', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                payment_method_id: setupIntent.payment_method
+            })
+        });
+
+        const saveData = await saveResponse.json();
+
+        if (!saveData.success) {
+            throw new Error(saveData.error || 'Failed to save payment method');
+        }
+
+        console.log('✓ Payment method saved!');
+
+        // Step 3: Trigger generation of remaining months
+        unlockButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Starting generation...';
+
+        const genResponse = await fetch('/api/generate-remaining-months', {
+            method: 'POST'
+        });
+
+        const genData = await genResponse.json();
+
+        if (!genResponse.ok || !genData.success) {
+            throw new Error(genData.error || 'Failed to start generation');
+        }
+
+        console.log('✓ Generation started! Created', genData.months_created, 'month records');
+
+        // Step 4: Show success and reload (with delay for session persistence)
+        unlockButton.innerHTML = '<i class="fas fa-check me-2"></i>Payment Authorized!';
+        unlockButton.classList.remove('btn-warning');
+        unlockButton.classList.add('btn-success');
+
+        // Wait 2 seconds to ensure session is fully saved to disk before reloading
+        setTimeout(() => {
+            console.log('🚀 Reloading to show generation progress...');
+            window.location.reload();
+        }, 2000);
+
+    } catch (error) {
+        console.error('Unlock error:', error);
+        document.getElementById('payment-errors').textContent = error.message;
+        unlockButton.innerHTML = originalHTML;
+        unlockButton.disabled = false;
+    }
+}
+
+// Auto-trigger generation if payment already authorized
+async function autoTriggerGeneration() {
+    console.log('💳 Payment method already authorized - triggering generation...');
+
+    try {
+        const response = await fetch('/api/generate-remaining-months', {
+            method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✓ Generation triggered! Created', data.months_created, 'month records');
+            // Wait 2 seconds for session persistence, then reload
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            console.error('Failed to trigger generation:', data.error);
+            // Reload anyway to show current state
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }
+    } catch (error) {
+        console.error('Error triggering generation:', error);
+        // Reload anyway to show current state
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+    }
+}
+
+// Start countdown on page load
+document.addEventListener('DOMContentLoaded', () => {
+    startCountdown();
+
+    // Check if payment already authorized and auto-trigger generation
+    const hasPaymentMethod = {{ generation_status.has_payment_method|tojson }};
+    if (hasPaymentMethod) {
+        console.log('🔍 Detected existing payment method - auto-triggering generation');
+        autoTriggerGeneration();
+    } else {
+        // Attach form submit handler only if no payment method yet
+        const paymentForm = document.getElementById('payment-form');
+        if (paymentForm) {
+            paymentForm.addEventListener('submit', handleUnlock);
+        }
+    }
+});
+{% endif %}
+
+// Progress polling for generating_full stage
+{% if generation_status.stage == 'generating_full' %}
+function updateRemainingProgress() {
+    fetch('/api/generation-progress')
+        .then(res => res.json())
+        .then(data => {
+            console.log('Progress update:', data);
+
+            // Calculate remaining months progress (total completed - 3 preview months)
+            const remainingCompleted = Math.max(0, data.completed_months - 3);
+            const remainingTotal = 10; // Cover + Apr-Dec
+            const percentage = Math.floor((remainingCompleted / remainingTotal) * 100);
+
+            // Update progress bar
+            const progressBar = document.getElementById('remainingProgressBar');
+            const progressText = document.getElementById('remainingProgressText');
+
+            if (progressBar && progressText) {
+                progressBar.style.width = percentage + '%';
+                progressText.textContent = `${remainingCompleted}/${remainingTotal} images`;
+                console.log(`📊 Progress: ${remainingCompleted}/${remainingTotal} (${percentage}%)`);
+            }
+
+            // Check if complete (all 13 months done)
+            if (data.is_complete || data.stage === 'fully_generated' || data.completed_months >= 13) {
+                console.log('✓ Generation complete! Reloading page...');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        })
+        .catch(err => {
+            console.error('Progress polling error:', err);
+        });
+}
+
+// Start polling every 2 seconds
+document.addEventListener('DOMContentLoaded', () => {
+    updateRemainingProgress(); // Initial call
+    setInterval(updateRemainingProgress, 2000);
+});
+{% endif %}
+</script>
+
+<script>
+// Product selection - Initialize immediately
+let selectedProduct = 'wall_calendar'; // Default to most popular
+
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Preview page loaded, initializing...');
+
+    // Image Preview Modal - Click to view full-size images
+    const imagePreviewTriggers = document.querySelectorAll('.image-preview-trigger');
+    const imagePreviewModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    const modalImage = document.getElementById('modalPreviewImage');
+    const modalTitle = document.getElementById('imagePreviewModalLabel');
+
+    imagePreviewTriggers.forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            const imageUrl = trigger.dataset.imageUrl;
+            const monthName = trigger.dataset.monthName;
+            const monthTitle = trigger.dataset.monthTitle;
+
+            modalImage.src = imageUrl;
+            modalTitle.textContent = `${monthName}: ${monthTitle}`;
+            imagePreviewModal.show();
+        });
+    });
+
+    // Product selection
+    const productOptions = document.querySelectorAll('.product-option');
+    console.log('Found product options:', productOptions.length);
+
+    productOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            console.log('Product clicked:', this.dataset.product);
+
+            // Remove selected class from all options
+            document.querySelectorAll('.product-option').forEach(opt => {
+                opt.classList.remove('selected', 'border-success', 'border-3');
+            });
+
+            // Add selected class to clicked option
+            this.classList.add('selected', 'border-success', 'border-3');
+
+            // Update selected product and price
+            selectedProduct = this.dataset.product;
+            const price = this.dataset.price;
+            const priceSpan = document.getElementById('selected-price');
+            if (priceSpan) {
+                // Calculate original price (25% off)
+                const originalPrice = price === '22.50' ? '30' : '35.33';
+                priceSpan.innerHTML = '<del>$' + originalPrice + '</del> $' + price;
+            }
+            console.log('Selected product:', selectedProduct, 'Price:', price);
+        });
+    });
+
+    // Mockup Carousel Functionality
+    const mockupDots = document.querySelectorAll('.mockup-dot');
+
+    mockupDots.forEach(dot => {
+        dot.addEventListener('click', function() {
+            const carouselId = this.dataset.carousel;
+            const targetIndex = parseInt(this.dataset.index);
+            const carouselContainer = document.getElementById(carouselId);
+
+            if (!carouselContainer) return;
+
+            // Get all images in this carousel
+            const images = carouselContainer.querySelectorAll('.mockup-carousel-image');
+            const dots = document.querySelectorAll(`[data-carousel="${carouselId}"]`);
+
+            // Hide all images and deactivate all dots
+            images.forEach(img => img.style.display = 'none');
+            dots.forEach(d => d.classList.remove('active'));
+
+            // Show target image and activate target dot
+            if (images[targetIndex]) {
+                images[targetIndex].style.display = 'block';
+            }
+            this.classList.add('active');
+        });
+    });
+
+    // Mockup Image Click to Preview - Open in modal like month images
+    const mockupImages = document.querySelectorAll('.mockup-carousel-image');
+
+    mockupImages.forEach(img => {
+        img.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent card selection
+
+            const imageUrl = this.src;
+            const altText = this.alt;
+
+            // Determine if it's Desktop or Wall Calendar
+            const carouselId = this.closest('.mockup-carousel-container').id;
+            const calendarType = carouselId.includes('desktop') ? 'Desktop Calendar' : 'Wall Calendar 2026';
+
+            modalImage.src = imageUrl;
+            modalTitle.textContent = `${calendarType} - ${altText}`;
+            imagePreviewModal.show();
+        });
+    });
+
+    // Add to Cart button
+    const addToCartBtn = document.getElementById('add-to-cart-btn');
+    console.log('Add to cart button:', addToCartBtn);
+
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', async function() {
+            console.log('Add to cart clicked, product:', selectedProduct);
+        const originalHTML = this.innerHTML;
+
+        // Show loading
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
+        this.disabled = true;
+
+        try {
+            const response = await fetch('/api/cart/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({product_type: selectedProduct})
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show success feedback
+                this.innerHTML = '<i class="fas fa-check me-2"></i>Added to Cart!';
+
+                // Update cart count in navigation
+                const cartBadge = document.querySelector('.cart-count-badge');
+                if (cartBadge) {
+                    cartBadge.textContent = data.cart_count;
+                    cartBadge.style.display = 'inline';
+                }
+
+                // Update modal cart count
+                document.getElementById('modalCartCount').textContent = data.cart_count;
+
+                // Show success modal
+                const modal = new bootstrap.Modal(document.getElementById('addedToCartModal'));
+                modal.show();
+
+                // Reset button
+                setTimeout(() => {
+                    this.innerHTML = originalHTML;
+                    this.disabled = false;
+                }, 1000);
+            } else {
+                alert('Error: ' + (data.error || 'Failed to add to cart'));
+                this.innerHTML = originalHTML;
+                this.disabled = false;
+            }
+        } catch (error) {
+            console.error('Add to cart error:', error);
+            alert('Failed to add to cart. Please try again.');
+            this.innerHTML = originalHTML;
+            this.disabled = false;
+        }
+        });
+    } else {
+        console.error('Add to cart button not found!');
+    }
+
+    // Order Now button (add to cart + redirect to cart page)
+    const orderNowBtn = document.getElementById('order-now-btn');
+    console.log('Order now button:', orderNowBtn);
+
+    if (orderNowBtn) {
+        // Reset button state on page load (fixes stuck "Redirecting..." when using back button)
+        orderNowBtn.disabled = false;
+        orderNowBtn.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>Order This Calendar Now';
+
+        orderNowBtn.addEventListener('click', async function() {
+            console.log('Order now clicked, product:', selectedProduct);
+        const originalHTML = this.innerHTML;
+
+        // Show loading
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding to cart...';
+        this.disabled = true;
+
+        try {
+            // Step 1: Add current calendar to cart
+            const addResponse = await fetch('/api/cart/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({product_type: selectedProduct})
+            });
+
+            const addData = await addResponse.json();
+
+            if (!addData.success) {
+                alert('Error: ' + (addData.error || 'Failed to add to cart'));
+                this.innerHTML = originalHTML;
+                this.disabled = false;
+                return;
+            }
+
+            console.log('✓ Added to cart, redirecting to cart page...');
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Redirecting...';
+
+            // Redirect to cart page
+            window.location.href = '/project/cart';
+        } catch (error) {
+            console.error('Checkout error:', error);
+            alert('Failed to start checkout. Please try again.');
+            this.innerHTML = originalHTML;
+            this.disabled = false;
+        }
+        });
+    } else {
+        console.error('Order now button not found!');
+    }
+
+    // Variant Navigation Dots - Switch between image variants
+    const variantDots = document.querySelectorAll('.variant-dot');
+    variantDots.forEach(dot => {
+        dot.addEventListener('click', async function() {
+            const monthCard = this.closest('.calendar-month-card');
+            const monthId = monthCard.dataset.monthId;
+            const variantIndex = parseInt(this.dataset.variantIndex);
+
+            console.log('Switching to variant', variantIndex, 'for month', monthId);
+
+            try {
+                // Update selected variant on server
+                const response = await fetch(`/api/month/${monthId}/select-variant`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({variant_index: variantIndex})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update image source
+                    const img = monthCard.querySelector('.month-variant-image');
+                    img.src = `/api/image/month/${monthId}?variant=${variantIndex}&t=${Date.now()}`;
+
+                    // Update active dot
+                    const dotsContainer = this.parentElement;
+                    dotsContainer.querySelectorAll('.variant-dot').forEach(d => d.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Update image preview trigger
+                    const previewTrigger = monthCard.querySelector('.image-preview-trigger');
+                    previewTrigger.dataset.imageUrl = `/api/image/month/${monthId}?variant=${variantIndex}&t=${Date.now()}`;
+
+                    console.log('✓ Variant switched successfully');
+                } else {
+                    console.error('Failed to switch variant:', data.error);
+                }
+            } catch (error) {
+                console.error('Variant switch error:', error);
+            }
+        });
+    });
+
+    // Fun loading messages for retry generation
+    const loadingMessages = [
+        'Hitting the Gym 🥵',
+        'Getting Undressed 🔥',
+        'Flexing Muscles 💪',
+        'Applying Oil ✨',
+        'Striking a Pose 📸',
+        'Unleashing the Charm 😏',
+        'Adding More Abs 🏋️',
+        'Perfecting the Smolder 😍',
+        'Cranking Up the Sexy 🌡️',
+        'Buffing Up 💪',
+        'Working the Angles 📐',
+        'Dialing Up the Heat 📞',
+        'Bringing the Spice 🌶️',
+        'Flexing Harder 💯',
+        'Turning Heads 👀'
+    ];
+
+    // Retry Generation Button - Trigger new image generation
+    const retryButtons = document.querySelectorAll('.btn-retry-generation');
+    retryButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            if (this.classList.contains('disabled')) {
+                return;
+            }
+
+            const monthId = this.dataset.monthId;
+            const monthNumber = this.dataset.monthNumber;
+            const currentRetryCount = parseInt(this.dataset.retryCount);
+
+            console.log('Retry generation for month', monthNumber, 'current retries:', currentRetryCount);
+
+            const originalHTML = this.innerHTML;
+            this.disabled = true;
+
+            // Start cycling through fun loading messages
+            let messageIndex = 0;
+            const updateMessage = () => {
+                this.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>${loadingMessages[messageIndex]}`;
+                messageIndex = (messageIndex + 1) % loadingMessages.length;
+            };
+
+            updateMessage(); // Show first message immediately
+            const messageInterval = setInterval(updateMessage, 1500); // Change every 1.5 seconds
+
+            try {
+                // Trigger regeneration
+                const response = await fetch(`/api/month/${monthId}/regenerate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Clear the message cycling interval
+                    clearInterval(messageInterval);
+                    this.innerHTML = '<i class="fas fa-check me-1"></i>New version generated!';
+
+                    // Add new variant dot
+                    const monthCard = this.closest('.calendar-month-card');
+                    const dotsContainer = monthCard.querySelector('.variant-dots-container');
+                    const newRetryCount = currentRetryCount + 1;
+
+                    // Remove active from all dots
+                    dotsContainer.querySelectorAll('.variant-dot').forEach(d => d.classList.remove('active'));
+
+                    // Add new dot
+                    const newDot = document.createElement('span');
+                    newDot.className = 'variant-dot active';
+                    newDot.dataset.variantIndex = newRetryCount;
+                    newDot.title = `Variant ${newRetryCount + 1}`;
+                    dotsContainer.appendChild(newDot);
+
+                    // Update button state
+                    this.dataset.retryCount = newRetryCount;
+                    if (newRetryCount >= 2) {
+                        this.classList.add('disabled');
+                        this.disabled = true;
+                        this.innerHTML = `<i class="fas fa-redo-alt me-1"></i>Max Retries Used (${newRetryCount}/2)`;
+                    } else {
+                        setTimeout(() => {
+                            this.innerHTML = `<i class="fas fa-redo-alt me-1"></i>Try Another Version (${newRetryCount}/2 used)`;
+                            this.disabled = false;
+                        }, 2000);
+                    }
+
+                    // Update image to show new variant
+                    const img = monthCard.querySelector('.month-variant-image');
+                    img.src = `/api/image/month/${monthId}?variant=${newRetryCount}&t=${Date.now()}`;
+
+                    // Update image preview trigger so modal shows new variant
+                    const previewTrigger = monthCard.querySelector('.image-preview-trigger');
+                    previewTrigger.dataset.imageUrl = `/api/image/month/${monthId}?variant=${newRetryCount}&t=${Date.now()}`;
+
+                    // Attach click handler to new dot
+                    newDot.addEventListener('click', async function() {
+                        const variantIndex = parseInt(this.dataset.variantIndex);
+                        console.log('Switching to variant', variantIndex);
+
+                        try {
+                            const response = await fetch(`/api/month/${monthId}/select-variant`, {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({variant_index: variantIndex})
+                            });
+
+                            const data = await response.json();
+
+                            if (data.success) {
+                                img.src = `/api/image/month/${monthId}?variant=${variantIndex}&t=${Date.now()}`;
+                                dotsContainer.querySelectorAll('.variant-dot').forEach(d => d.classList.remove('active'));
+                                this.classList.add('active');
+
+                                // Update image preview trigger so modal shows correct variant
+                                const previewTrigger = monthCard.querySelector('.image-preview-trigger');
+                                previewTrigger.dataset.imageUrl = `/api/image/month/${monthId}?variant=${variantIndex}&t=${Date.now()}`;
+                            }
+                        } catch (error) {
+                            console.error('Variant switch error:', error);
+                        }
+                    });
+
+                    console.log('✓ Regeneration successful, new variant added');
+                } else {
+                    throw new Error(data.error || 'Failed to regenerate image');
+                }
+            } catch (error) {
+                // Clear the message cycling interval
+                clearInterval(messageInterval);
+                console.error('Regeneration error:', error);
+                alert('Failed to generate new version. Please try again.');
+                this.innerHTML = originalHTML;
+                this.disabled = false;
+            }
+        });
+    });
+
+    console.log('Preview page initialization complete!');
+});
+</script>
+
+<style>
+/* Calendar Month Cards (Figma styling) */
+.calendar-month-card {
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-month-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.calendar-month-card .month-image-container {
+    padding: 0;
+    background-color: #FFFFFF;
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.calendar-month-card .month-image-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Clickable image styling */
+.calendar-image-clickable {
+    cursor: pointer;
+}
+
+/* Hover overlay with zoom icon */
+.image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.image-overlay i {
+    color: white;
+    font-size: 48px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.month-image-container a:hover .image-overlay {
+    opacity: 1;
+}
+
+.month-image-container a:hover img {
+    transform: scale(1.05);
+}
+
+/* Text content below image - all left-aligned (Figma exact styling) */
+.calendar-month-card .month-content {
+    padding: 8px 10px;
+    background-color: #FFFFFF;
+    text-align: left;
+    flex-grow: 1;
+}
+
+/* Month name badge - Peach bubble with pink text (Exact Figma specs) */
+.calendar-month-card .month-name-badge {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5.186px;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #EF2B8A;
+    letter-spacing: 0.48px;
+    text-transform: uppercase;
+    background: #FFEAB8;
+    padding: 3.112px 7.261px;
+    border-radius: 51.345px;
+    border: 0.519px solid rgba(255, 255, 255, 0.30);
+    margin-bottom: 4px;
+    width: fit-content;
+}
+
+/* Title - Bold with emoji (Figma design) */
+.calendar-month-card .month-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin-bottom: 2px;
+    margin-top: 4px;
+    text-align: left;
+    line-height: 1.3;
+}
+
+/* Description - Gray text (Figma design) */
+.calendar-month-card .month-description {
+    font-size: 13px;
+    color: #6B7280;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+/* Variant Navigation Dots */
+.variant-dots-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    background-color: #FFFFFF;
+}
+
+.variant-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #D1D5DB;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.variant-dot:hover {
+    background-color: #9CA3AF;
+    transform: scale(1.2);
+}
+
+.variant-dot.active {
+    background-color: #F827A8;
+    border-color: #F827A8;
+    box-shadow: 0 0 0 3px rgba(248, 39, 168, 0.2);
+    transform: scale(1.3);
+}
+
+/* Retry Generation Button */
+.btn-retry-generation {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid #F827A8;
+    background-color: #FFFFFF;
+    color: #F827A8;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-retry-generation:hover:not(.disabled) {
+    background-color: #F827A8;
+    color: #FFFFFF;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(248, 39, 168, 0.3);
+}
+
+.btn-retry-generation.disabled {
+    background-color: #E5E7EB;
+    color: #9CA3AF;
+    border-color: #D1D5DB;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-retry-generation i {
+    font-size: 11px;
+}
+
+.btn-retry-generation:active:not(.disabled) {
+    transform: translateY(0px);
+}
+
+/* Product selection cards */
+.product-option {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #dee2e6;
+}
+
+.product-option:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.product-option.selected {
+    border: 3px solid #198754 !important;
+    box-shadow: 0 5px 20px rgba(25, 135, 84, 0.3);
+    transform: translateY(-3px);
+}
+
+.product-option .card-body {
+    padding: 1.5rem 1rem;
+}
+
+/* Fix white text on white background issue */
+.product-option h5,
+.product-option h4,
+.product-option p,
+.product-option small {
+    color: #212529 !important; /* Bootstrap's default dark text color */
+}
+
+/* Keep specific color classes working */
+.product-option .text-muted {
+    color: #6c757d !important;
+}
+
+.product-option .text-primary {
+    color: #0d6efd !important;
+}
+
+.product-option .text-success {
+    color: #198754 !important;
+}
+
+/* Optimize lightbox for portrait images (3:4 aspect ratio) */
+.lightbox .modal-dialog {
+    max-width: none !important;
+    width: auto !important;
+    height: 100%;
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Make modal content fit portrait images better */
+.lightbox .modal-content {
+    background-color: rgba(0, 0, 0, 0.95) !important;
+    border: none !important;
+    width: auto !important;
+    max-width: 90vw;
+    max-height: 95vh;
+}
+
+/* Optimize image sizing for portrait orientation */
+.lightbox .modal-body {
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent !important;
+}
+
+.lightbox .modal-body img {
+    max-width: 90vw !important;
+    max-height: 90vh !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain;
+    margin: auto;
+}
+
+/* Make close button and navigation more visible */
+.lightbox .btn-close {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1060;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    opacity: 1 !important;
+}
+
+/* Style caption for better visibility */
+.lightbox .carousel-caption {
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 15px;
+    border-radius: 8px;
+    bottom: 30px;
+}
+
+/* Mockup Carousel Dots */
+.mockup-carousel-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.mockup-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #D9D9D9;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mockup-dot:hover {
+    background-color: #999;
+    transform: scale(1.2);
+}
+
+.mockup-dot.active {
+    background-color: #EF2B8A;
+    width: 12px;
+    height: 12px;
+}
+
+/* Mockup carousel images */
+.mockup-carousel-container {
+    position: relative;
+    width: 100%;
+}
+
+.mockup-carousel-image {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.mockup-carousel-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important;
+}
+
+/* Standardized Button Styling - Figma Design System */
+.btn-lg {
+    display: flex !important;
+    min-width: 251px;
+    height: 45px;
+    padding: 10.611px 52.239px !important;
+    justify-content: center;
+    align-items: center;
+    gap: 8.162px;
+    flex-shrink: 0;
+    border-radius: 70px !important;
+    font-weight: 600;
+}
+
+/* Make w-100 buttons responsive while maintaining height */
+.btn-lg.w-100 {
+    min-width: auto;
+    width: 100%;
+}
+</style>
+
+<script>
+// Customer Info Management
+function saveCustomerInfo() {
+    const email = document.getElementById('customer-email').value.trim();
+    const phone = document.getElementById('customer-phone').value.trim();
+    const saveCheckbox = document.getElementById('save-customer-info');
+
+    if (saveCheckbox && saveCheckbox.checked) {
+        // Only save if email is valid (basic validation)
+        if (email && email.includes('@') && email.includes('.')) {
+            const customerInfo = { email, phone };
+            localStorage.setItem('customerInfo', JSON.stringify(customerInfo));
+            console.log('Customer info saved:', customerInfo);
+        } else {
+            console.log('Email invalid or empty, not saving');
+        }
+    }
+}
+
+function loadCustomerInfo() {
+    const savedInfo = localStorage.getItem('customerInfo');
+    if (savedInfo) {
+        try {
+            const { email, phone } = JSON.parse(savedInfo);
+            document.getElementById('customer-email').value = email || '';
+            document.getElementById('customer-phone').value = phone || '';
+            document.getElementById('save-customer-info').checked = true;
+        } catch (e) {
+            console.error('Error loading customer info:', e);
+        }
+    }
+}
+
+// Auto-save when checkbox is changed
+document.addEventListener('DOMContentLoaded', function() {
+    loadCustomerInfo();
+
+    const saveCheckbox = document.getElementById('save-customer-info');
+    const emailInput = document.getElementById('customer-email');
+    const phoneInput = document.getElementById('customer-phone');
+
+    if (saveCheckbox) {
+        saveCheckbox.addEventListener('change', saveCustomerInfo);
+    }
+
+    if (emailInput) {
+        emailInput.addEventListener('blur', saveCustomerInfo);
+    }
+
+    if (phoneInput) {
+        phoneInput.addEventListener('blur', saveCustomerInfo);
+    }
+});
+
+// Handle "Create Calendar for Another Person" button
+async function handleCreateAnother() {
+    try {
+        // Check cart count
+        const response = await fetch('/api/cart');
+        const data = await response.json();
+
+        // If cart is empty, add current calendar first
+        if (data.success && data.count === 0) {
+            // Add wall calendar to cart
+            const addResponse = await fetch('/api/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_type: 'wall_calendar'
+                })
+            });
+
+            const addData = await addResponse.json();
+
+            if (addData.success) {
+                console.log('Current calendar added to cart before creating new one');
+            } else {
+                console.error('Failed to add calendar to cart:', addData.error);
+            }
+        }
+
+        // Navigate to create another page
+        window.location.href = "{{ url_for('projects.create_another') }}";
+
+    } catch (error) {
+        console.error('Error handling create another:', error);
+        // Navigate anyway even if there was an error
+        window.location.href = "{{ url_for('projects.create_another') }}";
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,737 @@
+/*
+ * KevCal Figma Design System
+ * Modern dark theme with coral pink accent
+ * Based on Figma design: "Hunk of the Month"
+ */
+
+/* ===== CSS VARIABLES ===== */
+:root {
+    /* Colors - Updated to match Figma navy/blue theme */
+    --bg-primary: #1E2947;
+    --bg-secondary: #2A3A5A;
+    --bg-card: rgba(255, 255, 255, 0.08);
+    --border-color: #4A5A7A;
+    --border-subtle: #8A9ABF;
+
+    --text-primary: #F5F5F5;
+    --text-secondary: #ABABAB;
+    --text-muted: #808080;
+    --text-dark: #172439;
+
+    --accent-primary: #F73E97;  /* Figma primary pink/magenta */
+    --accent-purple: #8B5CF6;
+    --accent-success: #10B981;
+    --accent-warning: #F59E0B;
+    --accent-danger: #EF4444;
+
+    /* Gradients */
+    --gradient-pink-orange: linear-gradient(135deg, #F73E97 0%, #FFA574 100%);
+    --gradient-cta: linear-gradient(135deg, #F73E97 0%, #FF8A9D 100%);
+
+    /* Typography */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-family-brand: 'Space Grotesk', 'Inter', sans-serif;  /* For logo/branding */
+    --font-size-h1: 48px;
+    --font-size-h2: 36px;
+    --font-size-h3: 28px;
+    --font-size-body: 16px;
+    --font-size-small: 14px;
+
+    /* Spacing */
+    --spacing-xs: 8px;
+    --spacing-sm: 16px;
+    --spacing-md: 24px;
+    --spacing-lg: 32px;
+    --spacing-xl: 48px;
+    --spacing-2xl: 64px;
+
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-pill: 24px;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-cta: 0 4px 14px rgba(255, 90, 121, 0.4);
+}
+
+/* ===== GLOBAL STYLES ===== */
+body {
+    background: white;  /* Changed from navy gradient to white to show section backgrounds */
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    font-size: var(--font-size-body);
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+h1 {
+    font-size: var(--font-size-h1);
+    font-weight: 400;
+    letter-spacing: -0.848px;
+    line-height: 1;
+}
+
+h2 {
+    font-size: var(--font-size-h2);
+}
+
+h3 {
+    font-size: var(--font-size-h3);
+}
+
+p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--spacing-sm);
+}
+
+/* ===== BUTTON STYLES ===== */
+.btn-figma-primary {
+    background: var(--gradient-cta);
+    color: var(--text-primary);
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 16px 32px;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-cta);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-figma-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 90, 121, 0.5);
+}
+
+.btn-figma-primary:active {
+    transform: translateY(0);
+}
+
+.btn-figma-secondary {
+    background: transparent;
+    color: var(--accent-primary);
+    border: 2px solid var(--accent-primary);
+    border-radius: var(--radius-pill);
+    padding: 14px 30px;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-figma-secondary:hover {
+    background: rgba(255, 90, 121, 0.1);
+    transform: translateY(-2px);
+}
+
+/* ===== CARD STYLES ===== */
+.card-figma {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.card-figma:hover {
+    border-color: var(--border-subtle);
+    box-shadow: var(--shadow-md);
+}
+
+.card-figma-dark {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+}
+
+.card-figma-purple {
+    background: var(--accent-purple);
+    border: none;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+/* ===== HERO SECTION ===== */
+.hero-figma {
+    text-align: center;
+    padding: var(--spacing-2xl) var(--spacing-md);
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-figma h1 {
+    font-size: 48px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.848px;
+    margin-bottom: var(--spacing-md);
+}
+
+.hero-figma p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto var(--spacing-xl);
+}
+
+/* ===== FIGMA CAROUSEL CARDS ===== */
+.figma-carousel-card {
+    width: 384px;
+    min-width: 384px;
+    flex-shrink: 0;
+    background: #2A3856;
+    border: 1px solid rgba(138, 154, 191, 0.3);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.figma-card-inner {
+    position: relative;
+    width: 100%;
+    height: 511px;
+    overflow: hidden;
+}
+
+.figma-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.figma-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Overlay disabled - no shadow/gradient on images */
+    background: transparent;
+    pointer-events: none;
+}
+
+.figma-card-caption {
+    position: absolute;
+    bottom: 20px;
+    left: 16px;
+    right: 16px;
+    text-align: center;
+    font-family: var(--font-family);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    letter-spacing: -0.15px;
+    color: white;
+}
+
+/* Scrollbar styling for carousel */
+.figma-carousel-card::-webkit-scrollbar {
+    height: 8px;
+}
+
+.figma-carousel-card::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.figma-carousel-card::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: 4px;
+}
+
+.figma-carousel-card::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+}
+
+/* Legacy carousel styles (keep for backward compatibility) */
+.carousel-figma {
+    position: relative;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.carousel-figma img {
+    width: 100%;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-subtle);
+}
+
+.carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.carousel-nav:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.carousel-nav.prev {
+    left: 10px;
+}
+
+.carousel-nav.next {
+    right: 10px;
+}
+
+/* ===== HOW IT WORKS SECTION ===== */
+.steps-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.step-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+}
+
+.step-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--accent-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.step-content h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-xs);
+}
+
+.step-content p {
+    margin: 0;
+    font-size: var(--font-size-small);
+}
+
+/* ===== UPLOAD PAGE STYLES ===== */
+.upload-dropzone {
+    background: var(--bg-card);
+    border: 2px dashed var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-2xl);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-dropzone:hover {
+    border-color: var(--accent-primary);
+    background: rgba(255, 90, 121, 0.05);
+}
+
+.upload-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--spacing-md);
+    color: var(--accent-primary);
+}
+
+.photo-examples {
+    margin-top: var(--spacing-xl);
+}
+
+.example-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.example-item img {
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 2px solid transparent;
+}
+
+.example-item.good img {
+    border-color: var(--accent-success);
+}
+
+.example-item.bad img {
+    border-color: var(--accent-danger);
+    opacity: 0.5;
+}
+
+.tips-box {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.tips-box ul {
+    margin: 0;
+    padding-left: var(--spacing-md);
+    color: var(--text-secondary);
+}
+
+.tips-box li {
+    margin-bottom: var(--spacing-xs);
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-figma {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-pill);
+    height: 12px;
+    overflow: hidden;
+    margin-bottom: var(--spacing-sm);
+}
+
+.progress-figma-bar {
+    background: var(--gradient-cta);
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    color: var(--accent-primary);
+    font-weight: 600;
+    font-size: var(--font-size-small);
+    margin-top: var(--spacing-xs);
+}
+
+/* ===== MONTH BADGES ===== */
+.month-badges {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: var(--spacing-sm);
+    margin: var(--spacing-md) 0;
+}
+
+.month-badge {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    text-align: center;
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.month-badge.completed {
+    background: var(--accent-success);
+    border-color: var(--accent-success);
+}
+
+.month-badge.processing {
+    background: var(--accent-warning);
+    border-color: var(--accent-warning);
+    animation: pulse 2s infinite;
+}
+
+.month-badge.failed {
+    background: var(--accent-danger);
+    border-color: var(--accent-danger);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ===== TESTIMONIALS ===== */
+.testimonial-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.testimonial-quote {
+    font-style: italic;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+/* ===== GRADIENT CARDS (CTA sections) ===== */
+.gradient-card {
+    background: var(--gradient-pink-orange);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    text-align: center;
+    margin: var(--spacing-xl) 0;
+}
+
+.gradient-card h2 {
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.gradient-card p {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* ===== RESPONSIVE STYLES ===== */
+@media (max-width: 768px) {
+    :root {
+        --font-size-h1: 32px;
+        --font-size-h2: 28px;
+        --font-size-h3: 24px;
+        --spacing-xl: 32px;
+        --spacing-2xl: 48px;
+    }
+
+    .hero-figma {
+        padding: var(--spacing-xl) var(--spacing-md);
+        min-height: 60vh;
+    }
+
+    .hero-figma h1 {
+        font-size: 36px !important;
+    }
+
+    .btn-figma-primary {
+        padding: 14px 24px;
+        font-size: 15px;
+    }
+
+    .step-card {
+        flex-direction: column;
+    }
+
+    .example-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Figma carousel cards on tablet */
+    .figma-carousel-card {
+        width: 320px;
+        min-width: 320px;
+    }
+
+    .figma-card-inner {
+        height: 427px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-figma h1 {
+        font-size: 28px !important;
+        letter-spacing: -0.5px !important;
+    }
+
+    .month-badges {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* Figma carousel cards on mobile */
+    .figma-carousel-card {
+        width: 280px;
+        min-width: 280px;
+    }
+
+    .figma-card-inner {
+        height: 373px;
+    }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-accent {
+    color: var(--accent-primary);
+}
+
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.mb-xl { margin-bottom: var(--spacing-xl); }
+
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mt-xl { margin-top: var(--spacing-xl); }
+
+.container-figma {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+}
+
+.section-figma {
+    padding: var(--spacing-2xl) 0;
+}
+
+/* ===== MOCKUP PREVIEW SECTION ===== */
+.mockup-preview-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.calendar-mockup-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    /* Force 1:1 aspect ratio (mockup is 2048x2048) */
+    aspect-ratio: 1 / 1;
+    /* Prevent content from overflowing */
+    overflow: hidden;
+}
+
+.mockup-background {
+    /* Fill container while maintaining aspect ratio */
+    width: 100%;
+    height: 100%;
+    display: block;
+    /* Ensure image covers container without distortion */
+    object-fit: contain;
+    object-position: center;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.mockup-calendar-page {
+    position: absolute;
+    /* Positioning: overlay on January calendar (upper left in mockup) */
+    top: 12%;             /* Position for January calendar */
+    left: 29%;            /* Shifted right for better alignment */
+    /* Add rotation - flipped direction to clockwise */
+    transform: translateX(-50%) perspective(1000px) rotateX(5deg) rotateZ(18deg);
+
+    /* Size: calendar page scaled 25% smaller */
+    width: 21%;
+    height: auto;
+    max-width: 21%;       /* Prevent overflow */
+
+    /* Make it look realistic */
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    /* Prevent image distortion */
+    object-fit: contain;
+
+    /* Smooth rendering on all devices */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform;
+}
+
+/* Alternative positioning: Center calendar (more prominent, use if January position doesn't look right) */
+/*
+.mockup-calendar-page {
+    top: 40%;
+    left: 50%;
+    width: 33%;
+    transform: translateX(-50%) perspective(1000px) rotateX(2deg) rotateZ(2deg);
+}
+*/
+
+/* Tablet adjustments (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .calendar-mockup-wrapper {
+        max-width: 500px;
+    }
+}
+
+/* Mobile adjustments (481px - 768px) */
+@media (max-width: 768px) {
+    .calendar-mockup-wrapper {
+        max-width: 450px;
+    }
+
+    .mockup-calendar-page {
+        /* Maintain January calendar positioning on tablets */
+        width: 21%;
+        top: 12%;
+        left: 29%;
+        /* Slightly reduce 3D effect on smaller screens */
+        transform: translateX(-50%) perspective(1000px) rotateX(4deg) rotateZ(18deg);
+    }
+}
+
+/* Small mobile (320px - 480px) */
+@media (max-width: 480px) {
+    .calendar-mockup-wrapper {
+        max-width: 100%;
+    }
+
+    .mockup-calendar-page {
+        /* Maintain positioning on small screens */
+        top: 12%;
+        left: 29%;
+        width: 21%;
+        /* Minimal 3D effect on small screens */
+        transform: translateX(-50%) perspective(1000px) rotateX(3deg) rotateZ(18deg);
+    }
+}
+
+/* Very small screens (< 375px) */
+@media (max-width: 374px) {
+    .mockup-calendar-page {
+        /* Fine-tune for very small screens */
+        top: 11.5%;
+        left: 29%;
+        width: 22%;
+        transform: translateX(-50%) perspective(1000px) rotateX(2deg) rotateZ(18deg);
+    }
+}
+
+/* High DPI / Retina displays - ensure crisp rendering */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .mockup-calendar-page {
+        /* Improve rendering on high-DPI screens */
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
